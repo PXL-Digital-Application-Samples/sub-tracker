@@ -1,14 +1,17 @@
 # Use an official Node.js runtime as a parent image
 FROM node:22-alpine
 
+# Install build dependencies for better-sqlite3
+RUN apk add --no-cache python3 make g++
+
 # Set the working directory in the container
 WORKDIR /app
 
 # Copy package.json and package-lock.json to the working directory
 COPY package*.json ./
 
-# Install production dependencies
-RUN npm ci --production
+# Install dependencies
+RUN npm install
 
 # Copy the rest of the application's source code
 COPY . .

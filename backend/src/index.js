@@ -16,14 +16,19 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(cors({
-  origin: 'http://localhost:8080',
+  origin: ['http://localhost:8080', 'http://localhost:8090'],
   credentials: true,
 }));
 app.use(express.json());
 
+// Health check before routers and session
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
 const sessionStore = process.env.DB_TYPE === 'postgres'
   ? new PgSession({ pool: db.pool })
-  : new SqliteStore({ db: db.db });
+  : new SqliteStore({ client: db.db });
 
 app.use(session({
   store: sessionStore,
@@ -40,11 +45,6 @@ app.use(session({
 app.use('/api', authRouter);
 app.use('/api', userRouter);
 app.use('/api', subscriptionsRouter);
-
-
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok' });
-});
 
 async function startServer() {
   try {

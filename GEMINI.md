@@ -26,9 +26,10 @@ The project is structured as a monorepo:
 │   └── package.json
 ├── backend/          # Node.js + Express API
 │   ├── Dockerfile
-│   └── package.json
-├── compose.yaml      # Docker Compose configuration
-├── .env.example      # Example environment variables for the backend
+│   ├── package.json
+│   └── .env.example  # Example environment variables
+├── compose.yaml      # Docker Compose configuration (SQLite)
+├── compose.postgres.yaml # Docker Compose configuration (Postgres)
 ├── README.md
 └── REQUIREMENTS.md
 ```
@@ -39,7 +40,7 @@ The application is designed to be run with Docker Compose.
 
 ### Environment Variables
 
-The backend requires an `.env` file (copied from `.env.example`). Key variables include:
+The backend requires an `.env` file (copied from `backend/.env.example`). Key variables include:
 
 - `DB_TYPE`: `sqlite` or `postgres`
 - `SESSION_SECRET`: A secret string for session management
@@ -54,9 +55,9 @@ The backend requires an `.env` file (copied from `.env.example`). Key variables 
     The frontend will be available at `http://localhost:8080`.
 
 2.  **PostgreSQL variant:**
-    This will likely be managed via a Compose profile. The command will be similar to:
+    The command to run with Postgres is:
     ```bash
-    docker compose --profile postgres up --build
+    docker compose -f compose.postgres.yaml up --build
     ```
 
 ### Local Development

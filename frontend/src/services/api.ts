@@ -1,8 +1,11 @@
-const API_URL = 'http://localhost:3000/api';
+const API_URL = '/api';
 
-async function fetchApi(path, options = {}) {
-  const { needsAuth = true } = options;
-  const defaultOptions = {
+interface FetchOptions extends RequestInit {
+  needsAuth?: boolean;
+}
+
+async function fetchApi(path: string, options: FetchOptions = {}) {
+  const defaultOptions: RequestInit = {
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
@@ -13,7 +16,6 @@ async function fetchApi(path, options = {}) {
   const response = await fetch(`${API_URL}${path}`, defaultOptions);
 
   if (response.status === 401) {
-    // Redirect to login or handle unauthorized access
     window.location.href = '/login';
     throw new Error('Unauthorized');
   }
@@ -31,7 +33,7 @@ async function fetchApi(path, options = {}) {
 }
 
 export default {
-  login: (credentials) => fetchApi('/login', {
+  login: (credentials: any) => fetchApi('/login', {
     method: 'POST',
     body: JSON.stringify(credentials),
     needsAuth: false,
@@ -39,24 +41,29 @@ export default {
   logout: () => fetchApi('/logout', { method: 'POST' }),
 
   getUser: () => fetchApi('/user'),
-  updateUser: (userData) => fetchApi('/user', {
+  updateUser: (userData: any) => fetchApi('/user', {
     method: 'PUT',
     body: JSON.stringify(userData),
   }),
-  updatePassword: (passwords) => fetchApi('/user/password', {
+  updatePassword: (passwords: any) => fetchApi('/user/password', {
     method: 'PUT',
     body: JSON.stringify(passwords),
   }),
 
   getActiveSubscriptions: () => fetchApi('/subscriptions/active'),
   getSubscriptionHistory: () => fetchApi('/subscriptions/history'),
-  createSubscription: (subData) => fetchApi('/subscriptions', {
+  createSubscription: (subData: any) => fetchApi('/subscriptions', {
     method: 'POST',
     body: JSON.stringify(subData),
   }),
-  updateSubscription: (id, subData) => fetchApi(`/subscriptions/${id}`, {
+  updateSubscription: (id: string | number, subData: any) => fetchApi(`/subscriptions/${id}`, {
     method: 'PUT',
-    body: JSON.stringify(subData),
+    body: JSON.stringify(subToData(subData)),
   }),
-  deleteSubscription: (id) => fetchApi(`/subscriptions/${id}`, { method: 'DELETE' }),
+  deleteSubscription: (id: string | number) => fetchApi(`/subscriptions/${id}`, { method: 'DELETE' }),
 };
+
+function subToData(sub: any) {
+  const { id, user_id, created_at, total_active, total_monthly_cost, total_yearly_cost, ...data } = sub;
+  return data;
+}
