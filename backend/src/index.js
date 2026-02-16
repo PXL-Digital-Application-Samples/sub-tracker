@@ -96,12 +96,6 @@ async function startServer() {
   }
 }
 
-if (require.main === module) {
-  startServer().catch(err => {
-    process.exit(1);
-  });
-}
-
 async function shutdown(signal) {
   logger.info({ signal }, 'Shutdown signal received');
   if (server) {
@@ -118,5 +112,11 @@ async function shutdown(signal) {
 
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));
+
+if (require.main === module) {
+  startServer().catch(err => {
+    process.exit(1);
+  });
+}
 
 module.exports = { app, startServer };

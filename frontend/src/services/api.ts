@@ -24,7 +24,11 @@ export function setUnauthorizedHandler(handler: () => void) {
   onUnauthorized = handler;
 }
 
-async function fetchApi(path: string, options: RequestInit = {}) {
+interface ExtendedRequestInit extends RequestInit {
+  skip401Redirect?: boolean;
+}
+
+async function fetchApi(path: string, options: ExtendedRequestInit = {}) {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
@@ -33,15 +37,17 @@ async function fetchApi(path: string, options: RequestInit = {}) {
     headers['x-csrf-token'] = csrfToken;
   }
 
+  const { skip401Redirect, ...fetchOptions } = options;
+
   const defaultOptions: RequestInit = {
     credentials: 'include',
     headers,
-    ...options,
+    ...fetchOptions,
   };
 
   const response = await fetch(`${API_URL}${path}`, defaultOptions);
 
-  if (response.status === 401) {
+  if (response.status === 401 && !skip401Redirect) {
     if (onUnauthorized) {
       onUnauthorized();
     } else {
@@ -67,6 +73,7 @@ export default {
     fetchApi('/login', {
       method: 'POST',
       body: JSON.stringify(credentials),
+      skip401Redirect: true,
     }),
   logout: () => fetchApi('/logout', { method: 'POST' }),
 

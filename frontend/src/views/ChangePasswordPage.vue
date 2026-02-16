@@ -54,7 +54,7 @@ const handleChangePassword = async () => {
     oldPassword.value = '';
     newPassword.value = '';
     confirmPassword.value = '';
-  } catch (err) {
+  } catch (err: any) {
     error.value = err.message;
   }
 };

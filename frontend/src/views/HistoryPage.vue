@@ -4,8 +4,8 @@
     <div v-if="loading">Loading...</div>
     <div v-else-if="error">{{ error }}</div>
     <template v-else>
-      <div class="table-container">
-        <table v-if="subscriptions.length">
+      <div class="table-container" v-if="subscriptions.length">
+        <table>
           <thead>
           <tr>
             <th>Company</th>

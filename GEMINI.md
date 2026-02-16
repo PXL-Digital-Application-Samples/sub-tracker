@@ -26,7 +26,7 @@ The project is structured as a monorepo:
 │   ├── Dockerfile               # Multi-stage build: Node → Nginx
 │   ├── nginx.conf               # Nginx config (serves SPA, proxies /api to backend)
 │   ├── package.json
-│   ├── vite.config.ts
+│   ├── vite.config.ts           # Vite config (includes /api proxy for preview/dev)
 │   ├── vitest.config.ts         # Unit/Component test config (vitest)
 │   ├── cypress.config.ts        # E2E test config (cypress)
 │   ├── cypress/
@@ -79,6 +79,7 @@ The project is structured as a monorepo:
 ├── .github/workflows/ci.yml     # GitHub Actions CI pipeline
 ├── compose.yaml                 # Docker Compose — SQLite variant (port 8080)
 ├── compose.postgres.yaml        # Docker Compose — PostgreSQL variant (port 8080)
+├── test_all.sh                  # Unified test runner (Backend, Frontend, E2E)
 ├── smoke_test.sh                # Bash smoke test
 ├── CODE_REVIEW.md               # Detailed code review findings
 ├── IMPLEMENTATION_PLAN.md       # remediated implementation plan
@@ -135,6 +136,17 @@ The application requires a `.env` file at the root.
     npm run dev
     ```
 
+### Testing
+
+The project includes a unified test runner:
+```bash
+./test_all.sh
+```
+This script sequentially runs:
+1.  Backend Vitest integration tests.
+2.  Frontend Vitest component tests.
+3.  Cypress E2E tests (using a headless Electron browser and a temporary test database).
+
 ### Default Credentials
 
 - **Email:** `user@test.com`
@@ -160,7 +172,7 @@ The application requires a `.env` file at the root.
 -   **Database abstraction:** All SQL is encapsulated within `backend/src/db/sqlite.js` and `backend/src/db/postgres.js`. Route handlers call named adapter methods (e.g., `db.getActiveSubscriptions(userId)`).
 -   **Currency:** Prices are stored as **integer cents** (e.g., $19.99 is `1999`) to avoid floating-point issues.
 -   **CSRF:** The frontend must call `initCsrf()` on boot to fetch the token, and include it in the `x-csrf-token` header for all state-changing requests.
--   **Auth:** Handled by `auth` Pinia store. Reacts to 401 responses automatically via an unauthorized handler in `api.ts`.
+-   **Auth:** Handled by `auth` Pinia store. Reacts to 401 responses automatically via an unauthorized handler in `api.ts`. `fetchApi` supports `skip401Redirect` for the login flow.
 
 ## API Endpoints
 

@@ -5,11 +5,19 @@ describe('Subscriptions', () => {
     cy.get('input[type="email"]').type('user@test.com');
     cy.get('input[type="password"]').type('password123');
     cy.get('button[type="submit"]').click();
+    cy.url().should('eq', Cypress.config().baseUrl + '/');
     cy.visit('/subscriptions');
+    cy.contains('h1', 'Active Subscriptions');
   });
 
   it('displays active subscriptions', () => {
-    cy.contains('Netflix');
+    cy.get('body').then(($body) => {
+      if ($body.find('.error').length) {
+        cy.log('ERROR FOUND ON PAGE:', $body.find('.error').text());
+      }
+    });
+    // Wait longer for the data to load
+    cy.contains('Netflix', { timeout: 10000 });
     cy.contains('Spotify');
   });
 

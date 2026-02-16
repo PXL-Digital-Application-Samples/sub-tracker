@@ -41,7 +41,7 @@ const fetchUser = async () => {
   try {
     loading.value = true;
     user.value = await api.getUser();
-  } catch (err) {
+  } catch (err: any) {
     error.value = err.message;
   } finally {
     loading.value = false;
@@ -49,12 +49,14 @@ const fetchUser = async () => {
 };
 
 const handleUpdate = async () => {
+  if (!user.value) return;
+  
   error.value = '';
   successMessage.value = '';
   try {
     await api.updateUser(user.value);
     successMessage.value = 'Profile updated successfully!';
-  } catch (err) {
+  } catch (err: any) {
     error.value = err.message;
   }
 };

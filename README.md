@@ -64,11 +64,17 @@ npm run test:unit  # Runs component tests
 npm run type-check # Validates TypeScript
 ```
 
+### Full Test Suite
+Run all tests (Backend, Frontend Unit, and Cypress E2E) with one command:
+```bash
+./test_all.sh
+```
+
 ## Architecture
 
 - **Database:** Abstracted through an adapter pattern (`sqlite.js` / `postgres.js`).
 - **State Management:** Pinia store for reactive authentication state.
-- **API:** Centralized `api.ts` service with automatic CSRF token handling.
+- **API:** Centralized `api.ts` service with automatic CSRF token handling and error management.
 - **CI/CD:** Automated testing and linting via GitHub Actions.
 
 ## License
