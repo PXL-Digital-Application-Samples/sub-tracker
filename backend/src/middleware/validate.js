@@ -18,7 +18,7 @@ const passwordValidation = [
 
 const subscriptionValidation = [
   body('company_name').notEmpty().withMessage('Company name is required.'),
-  body('price').isFloat({ gt: 0 }).withMessage('Price must be a positive number.'),
+  body('price').isInt({ gt: 0 }).withMessage('Price must be a positive integer (cents).'),
   body('subscription_type').isIn(['monthly', 'yearly', 'lifetime']).withMessage('Invalid subscription type.'),
   body('start_date').isISO8601().withMessage('Invalid date format.'),
 ];

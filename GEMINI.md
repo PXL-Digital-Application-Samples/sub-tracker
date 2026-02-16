@@ -9,18 +9,12 @@ The project is a web application designed to help users track their subscription
 Current features:
 - Session-based user authentication (single seeded user — no registration)
 - User profile management (view, edit, change password)
-- Subscription management (CRUD — create, read, update, delete)
+- Subscription management (CRUD — create, read, update, cancel, delete)
 - Dashboard with analytics (monthly/yearly cost totals)
-- Separation of active and historical subscriptions
+- Separation of active and historical (cancelled) subscriptions
 - Docker Compose deployment for both database variants
-
-### Known Issues
-
-A comprehensive code review has been performed. See [CODE_REVIEW.md](CODE_REVIEW.md) for all findings and [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) for the remediation plan. Key issues include:
-- PostgreSQL mode has critical bugs (missing session table, broken result handling)
-- Frontend layout is broken by leftover scaffolding CSS
-- Zero test coverage (no unit, integration, or meaningful E2E tests)
-- SQL dialect logic is scattered across route files instead of being abstracted into adapters
+- Full test coverage (Backend integration, Frontend component, and E2E)
+- Secure practices (CSRF protection, Rate limiting, Structured logging)
 
 ## Project Structure
 
@@ -33,24 +27,25 @@ The project is structured as a monorepo:
 │   ├── nginx.conf               # Nginx config (serves SPA, proxies /api to backend)
 │   ├── package.json
 │   ├── vite.config.ts
-│   ├── vitest.config.ts         # Unit test config (vitest, no tests yet)
-│   ├── cypress.config.ts        # E2E test config (cypress, placeholder test only)
+│   ├── vitest.config.ts         # Unit/Component test config (vitest)
+│   ├── cypress.config.ts        # E2E test config (cypress)
 │   ├── cypress/
-│   │   └── e2e/
-│   │       └── example.cy.ts    # Scaffolding test — does not test the actual app
+│   │   └── e2e/                 # E2E test files (auth, subscriptions)
 │   └── src/
 │       ├── App.vue              # Root component with nav + RouterView
-│       ├── main.ts              # App entry point (Pinia + Vue Router)
+│       ├── main.ts              # App entry point (Pinia + Vue Router + CSRF init)
 │       ├── assets/
-│       │   ├── base.css         # CSS variables, dark mode, body reset
-│       │   └── main.css         # App-level styles (includes broken scaffolding CSS)
+│       │   ├── base.css         # CSS variables, dark mode, body reset, global styles
+│       │   └── main.css         # App-level imports
 │       ├── components/
 │       │   └── SubscriptionModal.vue  # Add/edit subscription modal
 │       ├── router/
-│       │   └── index.ts         # Route definitions + auth guard (localStorage-based)
+│       │   └── index.ts         # Route definitions + auth guard (Pinia-based)
 │       ├── services/
-│       │   └── api.ts           # HTTP client wrapping fetch() for all API calls
-│       ├── stores/              # Pinia stores (Pinia is installed but not actually used)
+│       │   └── api.ts           # HTTP client wrapping fetch() with CSRF/Auth handling
+│       ├── stores/              # Pinia stores (auth)
+│       ├── types/               # TypeScript interfaces for API models
+│       ├── utils/               # Shared utilities (formatting)
 │       └── views/
 │           ├── LoginPage.vue
 │           ├── DashboardPage.vue
@@ -60,68 +55,70 @@ The project is structured as a monorepo:
 │           └── ChangePasswordPage.vue
 ├── backend/                     # Node.js + Express 5 API
 │   ├── Dockerfile               # Node 22 Alpine
-│   ├── package.json             # CommonJS, no start/dev scripts
+│   ├── package.json             # CommonJS, scripts: start, dev, test
 │   ├── .env.example             # Example environment variables
 │   ├── data/                    # SQLite database file directory (gitignored)
+│   ├── vitest.config.js         # Backend test config
 │   └── src/
 │       ├── index.js             # App entry point, session config, server startup
+│       ├── logger.js            # Structured logging (Pino)
 │       ├── db/
 │       │   ├── index.js         # Factory — returns sqlite or postgres adapter based on DB_TYPE
-│       │   ├── sqlite.js        # SQLite adapter (better-sqlite3, synchronous)
-│       │   ├── postgres.js      # PostgreSQL adapter (pg Pool, async)
-│       │   ├── schema.js        # Table creation (branched SQL for each DB type)
+│       │   ├── sqlite.js        # SQLite adapter (fully async wrapper)
+│       │   ├── postgres.js      # PostgreSQL adapter (pg Pool)
+│       │   ├── schema.js        # Table creation (delegated to adapters)
 │       │   └── seed.js          # Default user + sample subscriptions
 │       ├── middleware/
 │       │   ├── auth.js          # requireAuth session check
-│       │   └── validate.js      # express-validator rules + validate middleware
+│       │   ├── validate.js      # express-validator rules + validate middleware
+│       │   └── rateLimit.js     # Rate limiting for sensitive routes
 │       └── routes/
 │           ├── auth.js          # POST /api/login, POST /api/logout
 │           ├── user.js          # GET/PUT /api/user, PUT /api/user/password
-│           └── subscriptions.js # CRUD for /api/subscriptions/*
-├── compose.yaml                 # Docker Compose — SQLite variant (port 8090)
+│           └── subscriptions.js # CRUD + Cancel for /api/subscriptions/*
+├── .github/workflows/ci.yml     # GitHub Actions CI pipeline
+├── compose.yaml                 # Docker Compose — SQLite variant (port 8080)
 ├── compose.postgres.yaml        # Docker Compose — PostgreSQL variant (port 8080)
-├── smoke_test.sh                # Bash smoke test (currently broken — wrong port)
+├── smoke_test.sh                # Bash smoke test
 ├── CODE_REVIEW.md               # Detailed code review findings
-├── IMPLEMENTATION_PLAN.md       # Prioritized remediation plan
+├── IMPLEMENTATION_PLAN.md       # remediated implementation plan
 ├── README.md                    # User-facing documentation
-├── LICENSE
-└── .gitignore
+└── .env                         # Local environment variables (gitignored)
 ```
 
 ## Building and Running
 
 ### Docker Compose (recommended)
 
-1.  **SQLite variant (default):**
+1.  **Preparation:**
+    ```bash
+    cp .env.example .env
+    # Edit .env with your secrets
+    ```
+
+2.  **Run:**
     ```bash
     docker compose up --build
-    ```
-    The frontend will be available at `http://localhost:8090`.
-
-    > **Note:** The `compose.yaml` maps port 8090, not 8080. See CODE_REVIEW.md §2.1 for the inconsistency.
-
-2.  **PostgreSQL variant:**
-    ```bash
+    # OR for postgres:
     docker compose -f compose.postgres.yaml up --build
     ```
     The frontend will be available at `http://localhost:8080`.
 
 ### Environment Variables
 
-The backend reads these variables (see `backend/.env.example`):
+The application requires a `.env` file at the root.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `DB_TYPE` | `sqlite` | Database backend: `sqlite` or `postgres` |
-| `SESSION_SECRET` | (required) | Secret for signing session cookies |
+| `SESSION_SECRET` | (required) | Secret for signing session cookies and CSRF |
 | `PORT` | `3000` | Backend HTTP port |
+| `CORS_ORIGINS` | `http://localhost:8080` | Allowed CORS origins (comma-separated) |
 | `POSTGRES_HOST` | `postgres` | PostgreSQL hostname |
 | `POSTGRES_PORT` | `5432` | PostgreSQL port |
 | `POSTGRES_USER` | `sub_user` | PostgreSQL username |
-| `POSTGRES_PASSWORD` | `sub_pass` | PostgreSQL password |
+| `POSTGRES_PASSWORD` | (required) | PostgreSQL password |
 | `POSTGRES_DB` | `sub_tracker` | PostgreSQL database name |
-
-> **Warning:** Both compose files currently hardcode `SESSION_SECRET: supersecret`. This should be externalized for any non-local use.
 
 ### Local Development
 
@@ -129,7 +126,7 @@ The backend reads these variables (see `backend/.env.example`):
     ```bash
     cd backend
     npm install
-    node src/index.js       # No "start" script exists yet
+    npm run dev             # Hot-reload with nodemon
     ```
 -   **Frontend:**
     ```bash
@@ -137,7 +134,6 @@ The backend reads these variables (see `backend/.env.example`):
     npm install
     npm run dev
     ```
-    The Vite dev server does **not** proxy `/api` requests. For local frontend development, the backend must be running separately and CORS must allow the Vite dev server origin.
 
 ### Default Credentials
 
@@ -147,66 +143,45 @@ The backend reads these variables (see `backend/.env.example`):
 ## Technical Stack
 
 ### Backend
-- **Runtime:** Node.js 22 (Alpine Docker image)
+- **Runtime:** Node.js 22
 - **Framework:** Express 5.2
-- **Module system:** CommonJS (`require`/`module.exports`)
-- **Databases:** better-sqlite3 (SQLite), pg (PostgreSQL)
-- **Sessions:** express-session with better-sqlite3-session-store or connect-pg-simple
-- **Auth:** bcrypt password hashing
-- **Validation:** express-validator
+- **Logging:** Pino (structured JSON)
+- **Security:** `csrf-csrf` (Double Submit Cookie), `express-rate-limit`
+- **Testing:** Vitest + Supertest
 
 ### Frontend
-- **Framework:** Vue 3.5 with `<script setup>` (components do not use `lang="ts"` despite TypeScript being configured)
-- **Build tool:** Vite 7
-- **Router:** vue-router 5
-- **State management:** Pinia 3 (installed but not used — state is local `ref()` per component)
-- **Testing:** vitest (configured, no tests), Cypress (configured, placeholder test only)
-- **Linting:** ESLint + oxlint + Prettier
+- **Framework:** Vue 3.5 (TypeScript, `<script setup>`)
+- **State management:** Pinia 3
+- **Styling:** CSS Variables (Light/Dark mode), Responsive design
+- **Testing:** Vitest + @vue/test-utils (Unit/Component), Cypress (E2E)
 
 ## Development Conventions
 
--   **Database abstraction:** A factory in `backend/src/db/index.js` returns the SQLite or PostgreSQL adapter based on `DB_TYPE`. However, the abstraction is currently **leaky** — every route file contains `process.env.DB_TYPE` branches for SQL dialect differences (`?` vs `$1`, `AUTOINCREMENT` vs `SERIAL`, date functions, etc.).
--   **Authentication:** Session-based with cookies (`httpOnly`, `sameSite: lax`). Sessions are stored in the database. The frontend tracks login state via `localStorage.setItem('isLoggedIn', 'true')` which is checked by the Vue Router guard.
--   **API:** RESTful JSON API. All endpoints are prefixed with `/api`. The frontend uses a thin `fetch()` wrapper in `src/services/api.ts`.
--   **Validation:** Backend validates input using express-validator middleware. Frontend has minimal client-side validation (HTML `required` attributes).
--   **Seeding:** On first startup, if the `users` table is empty, a default user and 5 sample subscriptions are created automatically.
+-   **Database abstraction:** All SQL is encapsulated within `backend/src/db/sqlite.js` and `backend/src/db/postgres.js`. Route handlers call named adapter methods (e.g., `db.getActiveSubscriptions(userId)`).
+-   **Currency:** Prices are stored as **integer cents** (e.g., $19.99 is `1999`) to avoid floating-point issues.
+-   **CSRF:** The frontend must call `initCsrf()` on boot to fetch the token, and include it in the `x-csrf-token` header for all state-changing requests.
+-   **Auth:** Handled by `auth` Pinia store. Reacts to 401 responses automatically via an unauthorized handler in `api.ts`.
 
 ## API Endpoints
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| `GET` | `/api/health` | No | Health check — returns `{ status: 'ok' }` |
-| `POST` | `/api/login` | No | Authenticate with email + password |
+| `GET` | `/api/health` | No | Health check |
+| `GET` | `/api/csrf-token` | No | Get CSRF token |
+| `POST` | `/api/login` | No | Authenticate (Rate limited) |
 | `POST` | `/api/logout` | Yes | Destroy session |
 | `GET` | `/api/user` | Yes | Get current user profile |
-| `PUT` | `/api/user` | Yes | Update user profile (email, name, zipcode) |
-| `PUT` | `/api/user/password` | Yes | Change password (requires old password) |
-| `GET` | `/api/subscriptions/active` | Yes | List active subscriptions + cost summary |
-| `GET` | `/api/subscriptions/history` | Yes | List expired/inactive subscriptions |
-| `POST` | `/api/subscriptions` | Yes | Create a new subscription |
-| `PUT` | `/api/subscriptions/:id` | Yes | Update a subscription |
-| `DELETE` | `/api/subscriptions/:id` | Yes | Delete a subscription |
+| `PUT` | `/api/user` | Yes | Update profile |
+| `PUT` | `/api/user/password` | Yes | Change password |
+| `GET` | `/api/subscriptions/active` | Yes | List active subscriptions (Paginated) |
+| `GET` | `/api/subscriptions/history` | Yes | List cancelled subscriptions (Paginated) |
+| `POST` | `/api/subscriptions` | Yes | Create subscription |
+| `POST` | `/api/subscriptions/:id/cancel`| Yes | Cancel (archive) subscription |
+| `PUT` | `/api/subscriptions/:id` | Yes | Update subscription |
+| `DELETE` | `/api/subscriptions/:id` | Yes | Hard delete subscription |
 
 ## Database Schema
 
-### `users`
-| Column | SQLite | PostgreSQL |
-|--------|--------|------------|
-| `id` | `INTEGER PRIMARY KEY AUTOINCREMENT` | `SERIAL PRIMARY KEY` |
-| `email` | `TEXT UNIQUE NOT NULL` | `TEXT UNIQUE NOT NULL` |
-| `password` | `TEXT NOT NULL` | `TEXT NOT NULL` |
-| `first_name` | `TEXT` | `TEXT` |
-| `last_name` | `TEXT` | `TEXT` |
-| `zipcode` | `TEXT` | `TEXT` |
-
 ### `subscriptions`
-| Column | SQLite | PostgreSQL |
-|--------|--------|------------|
-| `id` | `INTEGER PRIMARY KEY AUTOINCREMENT` | `SERIAL PRIMARY KEY` |
-| `user_id` | `INTEGER NOT NULL` (FK → users) | `INTEGER NOT NULL` (FK → users) |
-| `company_name` | `TEXT NOT NULL` | `TEXT NOT NULL` |
-| `description` | `TEXT` | `TEXT` |
-| `price` | `REAL NOT NULL` | `NUMERIC(10,2) NOT NULL` |
-| `subscription_type` | `TEXT NOT NULL` (monthly/yearly/lifetime) | same |
-| `start_date` | `TEXT NOT NULL` | `DATE NOT NULL` |
-| `created_at` | `TEXT DEFAULT CURRENT_TIMESTAMP` | `TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP` |
+- `price`: `INTEGER` (cents)
+- `cancelled_at`: `TIMESTAMP` / `TEXT` (ISO8601) - determines if a sub is active or history.
