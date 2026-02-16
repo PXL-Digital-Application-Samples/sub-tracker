@@ -3,32 +3,35 @@
     <h1>Active Subscriptions</h1>
     <button @click="openAddModal">Add Subscription</button>
     <div v-if="loading">Loading...</div>
-    <div v-if="error">{{ error }}</div>
-    <table v-if="subscriptions.length">
-      <thead>
-        <tr>
-          <th>Company</th>
-          <th>Price</th>
-          <th>Type</th>
-          <th>Start Date</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="sub in subscriptions" :key="sub.id">
-          <td>{{ sub.company_name }}</td>
-          <td>${{ sub.price.toFixed(2) }}</td>
-          <td>{{ sub.subscription_type }}</td>
-          <td>{{ formatDate(sub.start_date) }}</td>
-          <td>
-            <button @click="openEditModal(sub)">Edit</button>
-            <button @click="handleDelete(sub.id)">Delete</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-    <p v-else>No active subscriptions.</p>
-
+    <div v-else-if="error">{{ error }}</div>
+    <template v-else>
+      <div class="table-container">
+        <table v-if="subscriptions.length">
+          <thead>
+          <tr>
+            <th>Company</th>
+            <th>Price</th>
+            <th>Type</th>
+            <th>Start Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="sub in subscriptions" :key="sub.id">
+            <td>{{ sub.company_name }}</td>
+            <td>${{ formatPrice(sub.price) }}</td>
+            <td>{{ sub.subscription_type }}</td>
+            <td>{{ formatDate(sub.start_date) }}</td>
+                      <td>
+                        <button @click="openEditModal(sub)">Edit</button>
+                        <button @click="handleCancel(sub.id)">Cancel</button>
+                        <button @click="handleDelete(sub.id)">Delete</button>
+                      </td>          </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p v-else>No active subscriptions.</p>
+            </template>
     <SubscriptionModal
       v-if="isModalOpen"
       :subscription="selectedSubscription"
@@ -38,24 +41,23 @@
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted, defineProps } from 'vue';
+<script setup lang="ts">
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '../services/api';
 import SubscriptionModal from '../components/SubscriptionModal.vue';
+import type { Subscription } from '../types';
+import { formatDate, formatPrice } from '../utils/format';
 
-const props = defineProps({
-  id: {
-    type: String,
-    default: null,
-  },
-});
+const props = defineProps<{
+  id?: string | null;
+}>();
 
-const subscriptions = ref([]);
+const subscriptions = ref<Subscription[]>([]);
 const loading = ref(true);
 const error = ref('');
 const isModalOpen = ref(false);
-const selectedSubscription = ref(null);
+const selectedSubscription = ref<Subscription | null>(null);
 const router = useRouter();
 
 const fetchSubscriptions = async () => {
@@ -70,7 +72,7 @@ const fetchSubscriptions = async () => {
         openEditModal(subToEdit);
       }
     }
-  } catch (err) {
+  } catch (err: any) {
     error.value = err.message;
   } finally {
     loading.value = false;
@@ -82,7 +84,7 @@ const openAddModal = () => {
   isModalOpen.value = true;
 };
 
-const openEditModal = (sub) => {
+const openEditModal = (sub: Subscription) => {
   selectedSubscription.value = { ...sub };
   isModalOpen.value = true;
 };
@@ -95,20 +97,26 @@ const closeModal = () => {
   }
 };
 
-const handleDelete = async (id) => {
-  if (confirm('Are you sure you want to delete this subscription?')) {
+const handleCancel = async (id: number) => {
+  if (confirm('Are you sure you want to cancel this subscription? It will be moved to history.')) {
     try {
-      await api.deleteSubscription(id);
-      await fetchSubscriptions(); // Refresh the list
-    } catch (err) {
+      await api.cancelSubscription(id);
+      await fetchSubscriptions();
+    } catch (err: any) {
       error.value = err.message;
     }
   }
 };
 
-const formatDate = (dateString) => {
-  const options = { year: 'numeric', month: 'long', day: 'numeric' };
-  return new Date(dateString).toLocaleDateString(undefined, options);
+const handleDelete = async (id: number) => {
+  if (confirm('Are you sure you want to delete this subscription?')) {
+    try {
+      await api.deleteSubscription(id);
+      await fetchSubscriptions(); // Refresh the list
+    } catch (err: any) {
+      error.value = err.message;
+    }
+  }
 };
 
 onMounted(fetchSubscriptions);
@@ -121,7 +129,7 @@ table {
   margin-top: 1rem;
 }
 th, td {
-  border: 1px solid #ccc;
+  border: 1px solid var(--color-table-border);
   padding: 0.75rem;
   text-align: left;
 }

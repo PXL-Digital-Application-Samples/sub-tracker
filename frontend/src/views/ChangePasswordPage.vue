@@ -21,7 +21,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue';
 import api from '../services/api';
 
@@ -61,13 +61,4 @@ const handleChangePassword = async () => {
 </script>
 
 <style scoped>
-.error {
-  color: red;
-}
-.success {
-  color: green;
-}
-form div {
-  margin-bottom: 1rem;
-}
 </style>

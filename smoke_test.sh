@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Configuration
-API_URL="http://localhost:4567/api"
+API_URL="http://localhost:3000/api"
 COOKIE_FILE="/tmp/sub_tracker_cookies.txt"
 
 # Colors for output

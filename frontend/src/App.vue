@@ -1,12 +1,15 @@
 <template>
   <div id="app">
-    <header v-if="isLoggedIn">
+    <header v-if="authStore.isLoggedIn">
       <nav>
-        <RouterLink to="/">Dashboard</RouterLink>
-        <RouterLink to="/subscriptions">Subscriptions</RouterLink>
-        <RouterLink to="/subscriptions/history">History</RouterLink>
-        <RouterLink to="/profile">Profile</RouterLink>
-        <button @click="handleLogout">Logout</button>
+        <button class="nav-toggle" @click="navOpen = !navOpen">☰</button>
+        <div class="nav-links" :class="{ open: navOpen }">
+          <RouterLink to="/" @click="navOpen = false">Dashboard</RouterLink>
+          <RouterLink to="/subscriptions" @click="navOpen = false">Subscriptions</RouterLink>
+          <RouterLink to="/subscriptions/history" @click="navOpen = false">History</RouterLink>
+          <RouterLink to="/profile" @click="navOpen = false">Profile</RouterLink>
+          <button @click="handleLogout" class="logout-btn">Logout</button>
+        </div>
       </nav>
     </header>
     <main>
@@ -15,13 +18,15 @@
   </div>
 </template>
 
-<script setup>
-import { ref, watch } from 'vue';
+<script setup lang="ts">
+import { ref } from 'vue';
 import { RouterLink, RouterView, useRouter } from 'vue-router';
 import api from './services/api';
+import { useAuthStore } from './stores/auth';
 
 const router = useRouter();
-const isLoggedIn = ref(!!localStorage.getItem('isLoggedIn'));
+const authStore = useAuthStore();
+const navOpen = ref(false);
 
 const handleLogout = async () => {
   try {
@@ -29,32 +34,43 @@ const handleLogout = async () => {
   } catch (error) {
     console.error('Logout failed', error);
   } finally {
-    localStorage.removeItem('isLoggedIn');
-    isLoggedIn.value = false;
+    authStore.logout();
     router.push('/login');
   }
 };
-
-// Watch for route changes to update the isLoggedIn status
-watch(
-  () => router.currentRoute.value,
-  () => {
-    isLoggedIn.value = !!localStorage.getItem('isLoggedIn');
-  }
-);
 </script>
 
 <style scoped>
 header {
-  background-color: #f8f9fa;
+  background-color: var(--color-header-bg);
   padding: 1rem;
-  border-bottom: 1px solid #dee2e6;
+  border-bottom: 1px solid var(--color-header-border);
 }
 
 nav {
   display: flex;
   gap: 1rem;
   align-items: center;
+}
+
+.nav-links {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  width: 100%;
+}
+
+.nav-toggle {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--color-text);
+  padding: 0;
+}
+
+.logout-btn {
+  margin-left: auto;
 }
 
 nav a {
@@ -67,8 +83,32 @@ nav a.router-link-exact-active {
   color: #0056b3;
 }
 
-button {
-  margin-left: auto;
+@media (max-width: 768px) {
+  .nav-toggle {
+    display: block;
+  }
+
+  .nav-links {
+    display: none;
+    flex-direction: column;
+    align-items: flex-start;
+    position: absolute;
+    top: 60px;
+    left: 0;
+    background-color: var(--color-header-bg);
+    padding: 1rem;
+    border-bottom: 1px solid var(--color-header-border);
+    z-index: 100;
+  }
+
+  .nav-links.open {
+    display: flex;
+  }
+
+  .logout-btn {
+    margin-left: 0;
+    width: 100%;
+  }
 }
 </style>
 

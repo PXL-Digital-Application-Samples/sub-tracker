@@ -17,13 +17,10 @@ A web application to help you track your subscriptions, supporting both SQLite a
 - [Docker](https://www.docker.com/)
 - [Docker Compose](https://docs.docker.com/compose/)
 
-### Running with SQLite (Default)
+### Quick Start
 
-The simplest way to run the application is using the default SQLite database.
-
-```bash
-docker compose up --build
-```
+1. `cp .env.example .env` and edit the values (especially `SESSION_SECRET` and `POSTGRES_PASSWORD`).
+2. `docker compose up --build`
 
 The frontend will be available at `http://localhost:8080`.
 

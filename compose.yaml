@@ -2,14 +2,14 @@ services:
   frontend:
     build: ./frontend
     ports:
-      - "8090:80"
+      - "8080:80"
     depends_on:
       - backend
   backend:
     build: ./backend
     environment:
       DB_TYPE: sqlite
-      SESSION_SECRET: supersecret
+      SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET is required}
     volumes:
       - backend-data:/app/data
 

@@ -1,22 +1,52 @@
+import type {
+  User,
+  Subscription,
+  ActiveSubscriptionsResponse,
+  HistorySubscriptionsResponse,
+  LoginCredentials,
+  PasswordUpdate,
+  UserUpdate,
+  SubscriptionCreate,
+} from '../types';
+
 const API_URL = '/api';
 
-interface FetchOptions extends RequestInit {
-  needsAuth?: boolean;
+let onUnauthorized: (() => void) | null = null;
+let csrfToken: string | null = null;
+
+export async function initCsrf() {
+  const response = await fetch(`${API_URL}/csrf-token`, { credentials: 'include' });
+  const data = await response.json();
+  csrfToken = data.token;
 }
 
-async function fetchApi(path: string, options: FetchOptions = {}) {
+export function setUnauthorizedHandler(handler: () => void) {
+  onUnauthorized = handler;
+}
+
+async function fetchApi(path: string, options: RequestInit = {}) {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  if (csrfToken) {
+    headers['x-csrf-token'] = csrfToken;
+  }
+
   const defaultOptions: RequestInit = {
     credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
     ...options,
   };
 
   const response = await fetch(`${API_URL}${path}`, defaultOptions);
 
   if (response.status === 401) {
-    window.location.href = '/login';
+    if (onUnauthorized) {
+      onUnauthorized();
+    } else {
+      window.location.href = '/login';
+    }
     throw new Error('Unauthorized');
   }
 
@@ -33,37 +63,40 @@ async function fetchApi(path: string, options: FetchOptions = {}) {
 }
 
 export default {
-  login: (credentials: any) => fetchApi('/login', {
-    method: 'POST',
-    body: JSON.stringify(credentials),
-    needsAuth: false,
-  }),
+  login: (credentials: LoginCredentials) =>
+    fetchApi('/login', {
+      method: 'POST',
+      body: JSON.stringify(credentials),
+    }),
   logout: () => fetchApi('/logout', { method: 'POST' }),
 
-  getUser: () => fetchApi('/user'),
-  updateUser: (userData: any) => fetchApi('/user', {
-    method: 'PUT',
-    body: JSON.stringify(userData),
-  }),
-  updatePassword: (passwords: any) => fetchApi('/user/password', {
-    method: 'PUT',
-    body: JSON.stringify(passwords),
-  }),
+  getUser: () => fetchApi('/user') as Promise<User>,
+  updateUser: (userData: UserUpdate) =>
+    fetchApi('/user', {
+      method: 'PUT',
+      body: JSON.stringify(userData),
+    }),
+  updatePassword: (passwords: PasswordUpdate) =>
+    fetchApi('/user/password', {
+      method: 'PUT',
+      body: JSON.stringify(passwords),
+    }),
 
-  getActiveSubscriptions: () => fetchApi('/subscriptions/active'),
-  getSubscriptionHistory: () => fetchApi('/subscriptions/history'),
-  createSubscription: (subData: any) => fetchApi('/subscriptions', {
-    method: 'POST',
-    body: JSON.stringify(subData),
-  }),
-  updateSubscription: (id: string | number, subData: any) => fetchApi(`/subscriptions/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(subToData(subData)),
-  }),
-  deleteSubscription: (id: string | number) => fetchApi(`/subscriptions/${id}`, { method: 'DELETE' }),
+  getActiveSubscriptions: () => fetchApi('/subscriptions/active') as Promise<ActiveSubscriptionsResponse>,
+  getSubscriptionHistory: () => fetchApi('/subscriptions/history') as Promise<HistorySubscriptionsResponse>,
+  createSubscription: (subData: SubscriptionCreate) =>
+    fetchApi('/subscriptions', {
+      method: 'POST',
+      body: JSON.stringify(subData),
+    }),
+  updateSubscription: (id: number, subData: SubscriptionCreate) =>
+    fetchApi(`/subscriptions/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(subData),
+    }),
+  cancelSubscription: (id: number) =>
+    fetchApi(`/subscriptions/${id}/cancel`, {
+      method: 'POST',
+    }),
+  deleteSubscription: (id: number) => fetchApi(`/subscriptions/${id}`, { method: 'DELETE' }),
 };
-
-function subToData(sub: any) {
-  const { id, user_id, created_at, total_active, total_monthly_cost, total_yearly_cost, ...data } = sub;
-  return data;
-}

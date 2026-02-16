@@ -16,24 +16,26 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '../services/api';
+import { useAuthStore } from '../stores/auth';
 
 const email = ref('');
 const password = ref('');
 const error = ref('');
 const router = useRouter();
+const authStore = useAuthStore();
 
 const handleLogin = async () => {
   try {
     await api.login({ email: email.value, password: password.value });
-    localStorage.setItem('isLoggedIn', 'true');
+    authStore.login();
     router.push('/');
-  } catch (err) {
+  } catch (err: any) {
     error.value = err.message;
-    localStorage.removeItem('isLoggedIn');
+    authStore.logout();
   }
 };
 </script>

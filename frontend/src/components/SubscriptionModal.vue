@@ -39,20 +39,21 @@
   </div>
 </template>
 
-<script setup>
-import { ref, watch, defineProps, defineEmits } from 'vue';
+<script setup lang="ts">
+import { ref, watch } from 'vue';
 import api from '../services/api';
+import type { Subscription, SubscriptionCreate } from '../types';
 
-const props = defineProps({
-  subscription: {
-    type: Object,
-    default: null,
-  },
-});
+const props = defineProps<{
+  subscription?: Subscription | null;
+}>();
 
-const emit = defineEmits(['close', 'saved']);
+const emit = defineEmits<{
+  (e: 'close'): void;
+  (e: 'saved'): void;
+}>();
 
-const form = ref({});
+const form = ref<Partial<Subscription>>({});
 const error = ref('');
 const isEditMode = ref(false);
 
@@ -61,7 +62,7 @@ watch(() => props.subscription, (newVal) => {
     isEditMode.value = true;
     // Format date for input type='date'
     const formattedDate = newVal.start_date ? new Date(newVal.start_date).toISOString().split('T')[0] : '';
-    form.value = { ...newVal, start_date: formattedDate };
+    form.value = { ...newVal, start_date: formattedDate, price: newVal.price / 100 };
   } else {
     isEditMode.value = false;
     form.value = { subscription_type: 'monthly' };
@@ -72,14 +73,19 @@ watch(() => props.subscription, (newVal) => {
 const handleSubmit = async () => {
   error.value = '';
   try {
-    if (isEditMode.value) {
-      await api.updateSubscription(form.value.id, form.value);
+    const subData = {
+      ...form.value,
+      price: Math.round(Number(form.value.price) * 100)
+    } as SubscriptionCreate;
+
+    if (isEditMode.value && form.value.id) {
+      await api.updateSubscription(form.value.id, subData);
     } else {
-      await api.createSubscription(form.value);
+      await api.createSubscription(subData);
     }
     emit('saved');
     emit('close');
-  } catch (err) {
+  } catch (err: any) {
     error.value = err.message;
   }
 };
@@ -98,7 +104,7 @@ const handleSubmit = async () => {
   align-items: center;
 }
 .modal {
-  background: white;
+  background: var(--color-surface);
   padding: 1.5rem;
   border-radius: 8px;
   width: 400px;
@@ -107,24 +113,10 @@ const handleSubmit = async () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #ccc;
+  border-bottom: 1px solid var(--color-table-border);
   padding-bottom: 1rem;
 }
 .modal-body {
   padding-top: 1rem;
-}
-form div {
-  margin-bottom: 1rem;
-}
-label {
-  display: block;
-  margin-bottom: 0.25rem;
-}
-input, select {
-  width: 100%;
-  padding: 0.5rem;
-}
-.error {
-  color: red;
 }
 </style>

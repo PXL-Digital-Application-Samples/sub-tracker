@@ -2,8 +2,8 @@
   <div>
     <h1>Profile</h1>
     <div v-if="loading">Loading...</div>
-    <div v-if="error">{{ error }}</div>
-    <form v-if="user" @submit.prevent="handleUpdate">
+    <div v-else-if="error">{{ error }}</div>
+    <form v-else-if="user" @submit.prevent="handleUpdate">
       <div>
         <label>Email</label>
         <input type="email" v-model="user.email" required />
@@ -27,11 +27,12 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import api from '../services/api';
+import type { User } from '../types';
 
-const user = ref(null);
+const user = ref<User | null>(null);
 const loading = ref(true);
 const error = ref('');
 const successMessage = ref('');
@@ -62,10 +63,4 @@ onMounted(fetchUser);
 </script>
 
 <style scoped>
-form div {
-  margin-bottom: 1rem;
-}
-.success {
-  color: green;
-}
 </style>

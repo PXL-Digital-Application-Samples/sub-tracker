@@ -4,22 +4,20 @@ const { body } = require('express-validator');
 const db = require('../db');
 const { requireAuth } = require('../middleware/auth');
 const { validate, emailValidation, passwordValidation } = require('../middleware/validate');
+const logger = require('../logger');
 
 const router = express.Router();
 
 router.get('/user', requireAuth, async (req, res) => {
   try {
-    const userQuery = process.env.DB_TYPE === 'postgres'
-      ? 'SELECT id, email, first_name, last_name, zipcode FROM users WHERE id = $1'
-      : 'SELECT id, email, first_name, last_name, zipcode FROM users WHERE id = ?';
-    const users = await db.query(userQuery, [req.session.userId]);
+    const user = await db.findUserById(req.session.userId);
 
-    if (users.length === 0) {
+    if (!user) {
       return res.status(404).json({ message: 'User not found.' });
     }
-    res.json(users[0]);
+    res.json(user);
   } catch (error) {
-    console.error('Get user error:', error);
+    logger.error({ err: error }, 'Get user error');
     res.status(500).json({ message: 'Internal server error.' });
   }
 });
@@ -35,14 +33,10 @@ router.put('/user', requireAuth, userUpdateValidation, validate, async (req, res
   const { email, first_name, last_name, zipcode } = req.body;
 
   try {
-    const userUpdateQuery = process.env.DB_TYPE === 'postgres'
-      ? 'UPDATE users SET email = $1, first_name = $2, last_name = $3, zipcode = $4 WHERE id = $5'
-      : 'UPDATE users SET email = ?, first_name = ?, last_name = ?, zipcode = ? WHERE id = ?';
-    
-    await db.run(userUpdateQuery, [email, first_name, last_name, zipcode, req.session.userId]);
+    await db.updateUser(req.session.userId, { email, first_name, last_name, zipcode });
     res.json({ message: 'User updated successfully.' });
   } catch (error) {
-    console.error('Update user error:', error);
+    logger.error({ err: error }, 'Update user error');
     res.status(500).json({ message: 'Internal server error.' });
   }
 });
@@ -54,11 +48,10 @@ router.put('/user/password', requireAuth, passwordValidation, validate, async (r
   }
 
   try {
-    const userQuery = process.env.DB_TYPE === 'postgres'
-      ? 'SELECT password FROM users WHERE id = $1'
-      : 'SELECT password FROM users WHERE id = ?';
-    const users = await db.query(userQuery, [req.session.userId]);
-    const user = users[0];
+    const user = await db.getUserPassword(req.session.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
 
     const passwordMatch = await bcrypt.compare(oldPassword, user.password);
     if (!passwordMatch) {
@@ -66,14 +59,10 @@ router.put('/user/password', requireAuth, passwordValidation, validate, async (r
     }
 
     const hashedNewPassword = await bcrypt.hash(newPassword, 10);
-    const passwordUpdateQuery = process.env.DB_TYPE === 'postgres'
-      ? 'UPDATE users SET password = $1 WHERE id = $2'
-      : 'UPDATE users SET password = ? WHERE id = ?';
-      
-    await db.run(passwordUpdateQuery, [hashedNewPassword, req.session.userId]);
+    await db.updatePassword(req.session.userId, hashedNewPassword);
     res.json({ message: 'Password updated successfully.' });
   } catch (error) {
-    console.error('Update password error:', error);
+    logger.error({ err: error }, 'Update password error');
     res.status(500).json({ message: 'Internal server error.' });
   }
 });
