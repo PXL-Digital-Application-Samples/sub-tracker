@@ -8,6 +8,7 @@ module.exports = defineConfig({
     include: [
       'src/__tests__/routes/**/*.test.js',
       'src/__tests__/db/sqlite.test.js',
+      'src/__tests__/db/factory.test.js',
       'src/__tests__/error.test.js'
     ],
   },

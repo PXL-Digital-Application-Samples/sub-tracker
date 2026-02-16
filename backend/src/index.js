@@ -5,7 +5,6 @@ const session = require('express-session');
 const cookieParser = require('cookie-parser');
 const PgSession = require('connect-pg-simple')(session);
 const SqliteStore = require('better-sqlite3-session-store')(session);
-const { doubleCsrf } = require('csrf-csrf');
 
 const db = require('./db');
 const { createTables } = require('./db/schema');
@@ -14,6 +13,7 @@ const authRouter = require('./routes/auth');
 const userRouter = require('./routes/user');
 const subscriptionsRouter = require('./routes/subscriptions');
 const logger = require('./logger');
+const { doubleCsrfProtection, generateCsrfToken } = require('./middleware/csrf');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -51,17 +51,6 @@ app.use(session({
     secure: process.env.NODE_ENV === 'production',
   },
 }));
-
-const { doubleCsrfProtection, generateCsrfToken } = doubleCsrf({
-  getSecret: () => sessionSecret,
-  getSessionIdentifier: (req) => req.session.id,
-  cookieName: '_csrf',
-  cookieOptions: {
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-  },
-  getTokenFromRequest: (req) => req.headers['x-csrf-token'],
-});
 
 app.get('/api/csrf-token', (req, res) => {
   const token = generateCsrfToken(req, res);

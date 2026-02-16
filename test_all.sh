@@ -45,17 +45,13 @@ for i in {1..30}; do
   sleep 1
 done
 
-echo "🐘 Executing Postgres tests..."
+echo "🐘 Executing Postgres tests (via DATABASE_URL)..."
 docker compose -f compose.postgres.yaml run --rm \
   -e DB_TYPE=postgres \
   -e SESSION_SECRET=test-secret-123 \
   -e NODE_ENV=test \
-  -e POSTGRES_HOST=postgres \
-  -e POSTGRES_PORT=5432 \
-  -e POSTGRES_USER=sub_user \
-  -e POSTGRES_PASSWORD=change-me \
-  -e POSTGRES_DB=sub_tracker \
-  backend npm run test:postgres || { echo "❌ PostgreSQL backend tests failed!"; exit 1; }
+  -e DATABASE_URL=postgres://sub_user:change-me@postgres:5432/sub_tracker \
+  backend npm run test:postgres || { echo "❌ PostgreSQL DATABASE_URL tests failed!"; exit 1; }
 
 # 5. Frontend Unit Tests
 echo "🧪 Running Frontend Unit Tests..."

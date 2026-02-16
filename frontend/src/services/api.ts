@@ -19,6 +19,10 @@ export async function initCsrf() {
   csrfToken = data.token;
 }
 
+export function setCsrfToken(token: string) {
+  csrfToken = token;
+}
+
 export function setUnauthorizedHandler(handler: () => void) {
   onUnauthorized = handler;
 }

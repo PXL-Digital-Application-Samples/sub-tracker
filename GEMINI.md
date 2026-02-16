@@ -14,9 +14,10 @@ Current features:
 - Separation of active and historical (cancelled) subscriptions
 - Docker Compose deployment for both database variants
 - **Automated Dual-DB Test Suite:** Backend integration tests run against both SQLite and PostgreSQL.
-- **Full E2E Coverage:** Cypress tests cover Auth, Dashboard analytics, Profile updates, and Subscription CRUD.
-- **Mandatory Linting:** ESLint + Prettier enforced for both Frontend and Backend to ensure CI parity.
-- Secure practices (CSRF protection, Rate limiting, Structured logging)
+- **Dedicated Test Setups:** Isolated environments using `vitest.sqlite.js` and `vitest.postgres.js`.
+- **Architectural Verification:** Specific tests for DB Factory logic and CSRF token regeneration.
+- **Full E2E Coverage:** Cypress tests cover Auth, Dashboard, Profile, and Subscriptions.
+- **Mandatory Linting:** ESLint + Prettier enforced for local and CI parity.
 
 ## Project Structure
 
@@ -26,24 +27,24 @@ The project is structured as a monorepo:
 /
 ├── frontend/                    # Vue 3 + Vite + TypeScript application
 │   ├── cypress/
-│   │   └── e2e/                 # E2E test files (auth, dashboard, profile, subscriptions)
+│   │   └── e2e/                 # E2E test files
 │   └── src/
 │       ├── __tests__/           # Vitest component tests
 │       └── ...
 ├── backend/                     # Node.js + Express 5 API
-│   ├── vitest.sqlite.js         # SQLite-specific test config
-│   ├── vitest.postgres.js       # PostgreSQL-specific test config
+│   ├── vitest.sqlite.js         # Dedicated setup for SQLite integration tests
+│   ├── vitest.postgres.js       # Dedicated setup for PostgreSQL integration tests
 │   ├── eslint.config.mjs        # ESLint 9+ Flat Config
 │   ├── .prettierrc              # Prettier config
 │   └── src/
-│       ├── __tests__/           # Backend integration tests
+│       ├── __tests__/           # Backend integration & architectural tests
 │       └── db/
-│           ├── sqlite.js        # SQLite adapter (Lazy-loaded)
+│           ├── sqlite.js        # SQLite adapter (Hardened lazy-loading)
 │           ├── postgres.js      # PostgreSQL adapter
 │           └── ...
-├── test_all.sh                  # Fully automated test runner (Build + Lint + SQLite + Postgres + E2E)
-├── compose.yaml                 # Docker Compose — SQLite variant (port 8080)
-├── compose.postgres.yaml        # Docker Compose — PostgreSQL variant (port 8080)
+├── test_all.sh                  # Fully automated dual-DB test suite
+├── compose.yaml                 # Docker Compose — SQLite variant
+├── compose.postgres.yaml        # Docker Compose — PostgreSQL variant
 └── ...
 ```
 
@@ -57,31 +58,32 @@ The project is structured as a monorepo:
 
 ## Testing & Quality Assurance
 
-The project enforces high code quality through a mandatory automated pipeline.
+The project enforces high code quality through isolated, environment-aware testing.
 
 ### Full Automated Suite
-Run the following command to execute the entire quality pipeline (Linting → SQLite Tests → Postgres Tests → Frontend Unit → E2E):
+Run the following command to execute the entire quality pipeline:
 ```bash
 ./test_all.sh
 ```
-*Note: This script handles Docker container lifecycles for PostgreSQL automatically.*
+*Note: This script handles Docker `build --no-cache` and container lifecycles automatically.*
 
 ### Backend Tests
-- **Linting:** `cd backend && npm run lint`
-- **SQLite:** `cd backend && npm run test:sqlite`
-- **PostgreSQL:** `cd backend && npm run test:postgres` (requires running container)
+- **Architectural Isolation:** `src/__tests__/db/factory.test.js` verifies DB switching logic.
+- **SQLite:** `npm run test:sqlite` (Uses `vitest.sqlite.js`).
+- **PostgreSQL:** `npm run test:postgres` (Uses `vitest.postgres.js` inside Docker).
 
 ### Frontend Tests
-- **Linting:** `cd frontend && npm run lint`
-- **Unit/Component:** `cd frontend && npm run test:unit`
-- **E2E (Cypress):** `cd frontend && npx cypress run`
+- **Linting:** `cd frontend && npm run lint` (ESLint + oxlint).
+- **Unit/Component:** `cd frontend && npm run test:unit`.
+- **E2E (Cypress):** `cd frontend && npx cypress run`.
 
 ## Development Conventions
 
 -   **Database abstraction:** All SQL is encapsulated within `backend/src/db/sqlite.js` and `backend/src/db/postgres.js`.
--   **Lazy Loading:** Database adapters are lazy-loaded to prevent side effects (e.g., SQLite file creation) when running in a different environment.
--   **Stable Tests:** All database queries in tests use `ORDER BY id ASC` to ensure consistent results across different engines.
--   **CSRF:** Frontend must include `x-csrf-token` header for state-changing requests.
+-   **PostgreSQL Connection:** Supports both individual environment variables and a single `DATABASE_URL` connection string (ideal for RDS).
+-   **Hardened Lazy Loading:** `sqlite.js` throw an error if accessed while `DB_TYPE` is not `sqlite`.
+-   **CSRF Security:** Fresh tokens are generated and returned upon successful login to bind to the new session.
+-   **Stable Results:** All database queries in tests use `ORDER BY id ASC`.
 
 ## API Endpoints
 (See README.md for full list)

@@ -24,6 +24,8 @@ import { useRouter } from 'vue-router';
 import api from '../services/api';
 import { useAuthStore } from '../stores/auth';
 
+import { setCsrfToken } from '../services/api';
+
 const email = ref('');
 const password = ref('');
 const error = ref('');
@@ -32,7 +34,10 @@ const authStore = useAuthStore();
 
 const handleLogin = async () => {
   try {
-    await api.login({ email: email.value, password: password.value });
+    const response = await api.login({ email: email.value, password: password.value });
+    if (response.token) {
+      setCsrfToken(response.token);
+    }
     authStore.login();
     router.push('/');
   } catch (err: any) {

@@ -7,6 +7,7 @@ module.exports = defineConfig({
     fileParallelism: false,
     include: [
       'src/__tests__/routes/**/*.test.js',
+      'src/__tests__/db/factory.test.js',
       'src/__tests__/error.test.js'
     ],
     exclude: [

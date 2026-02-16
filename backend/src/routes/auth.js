@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const db = require('../db');
 const { loginLimiter } = require('../middleware/rateLimit');
 const logger = require('../logger');
+const { generateCsrfToken } = require('../middleware/csrf');
 
 const router = express.Router();
 
@@ -29,7 +30,10 @@ router.post('/login', loginLimiter, async (req, res) => {
 
     req.session.userId = user.id;
     logger.info({ event: 'login_success' }, 'User logged in successfully');
-    res.json({ message: 'Login successful.' });
+    
+    // Generate a new CSRF token after login to bind it to the new session
+    const token = generateCsrfToken(req, res);
+    res.json({ message: 'Login successful.', token });
   } catch (error) {
     logger.error({ err: error }, 'Login error');
     res.status(500).json({ message: 'Internal server error.' });
@@ -42,6 +46,7 @@ router.post('/logout', (req, res) => {
       return res.status(500).json({ message: 'Could not log out, please try again.' });
     }
     res.clearCookie('connect.sid');
+    res.clearCookie('_csrf'); // Also clear the CSRF cookie
     res.json({ message: 'Logout successful.' });
   });
 });
