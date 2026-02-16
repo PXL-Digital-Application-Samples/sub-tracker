@@ -1,6 +1,5 @@
 import type {
   User,
-  Subscription,
   ActiveSubscriptionsResponse,
   HistorySubscriptionsResponse,
   LoginCredentials,
@@ -89,8 +88,10 @@ export default {
       body: JSON.stringify(passwords),
     }),
 
-  getActiveSubscriptions: () => fetchApi('/subscriptions/active') as Promise<ActiveSubscriptionsResponse>,
-  getSubscriptionHistory: () => fetchApi('/subscriptions/history') as Promise<HistorySubscriptionsResponse>,
+  getActiveSubscriptions: (page = 1, limit = 20) =>
+    fetchApi(`/subscriptions/active?page=${page}&limit=${limit}`) as Promise<ActiveSubscriptionsResponse>,
+  getSubscriptionHistory: (page = 1, limit = 20) =>
+    fetchApi(`/subscriptions/history?page=${page}&limit=${limit}`) as Promise<HistorySubscriptionsResponse>,
   createSubscription: (subData: SubscriptionCreate) =>
     fetchApi('/subscriptions', {
       method: 'POST',

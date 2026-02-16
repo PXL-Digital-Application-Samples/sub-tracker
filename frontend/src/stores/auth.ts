@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
+import api from '../services/api';
 
 export const useAuthStore = defineStore('auth', () => {
   const isLoggedIn = ref(!!localStorage.getItem('isLoggedIn'));
@@ -14,5 +15,14 @@ export const useAuthStore = defineStore('auth', () => {
     isLoggedIn.value = false;
   }
 
-  return { isLoggedIn, login, logout };
+  async function checkSession() {
+    try {
+      await api.getUser();
+      login();
+    } catch {
+      logout();
+    }
+  }
+
+  return { isLoggedIn, login, logout, checkSession };
 });

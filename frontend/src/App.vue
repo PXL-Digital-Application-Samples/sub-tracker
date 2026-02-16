@@ -75,12 +75,12 @@ nav {
 
 nav a {
   text-decoration: none;
-  color: #007bff;
+  color: var(--color-link);
 }
 
 nav a.router-link-exact-active {
   font-weight: bold;
-  color: #0056b3;
+  color: var(--color-link-active);
 }
 
 @media (max-width: 768px) {

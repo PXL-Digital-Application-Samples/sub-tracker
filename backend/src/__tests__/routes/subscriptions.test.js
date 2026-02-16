@@ -1,5 +1,4 @@
 const { createTestAgent } = require('../setup');
-const db = require('../../db');
 
 describe('Subscription Routes', () => {
   let agent, csrfToken;
@@ -15,6 +14,26 @@ describe('Subscription Routes', () => {
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty('subscriptions');
     expect(res.body).toHaveProperty('total_active');
+  });
+
+  it('GET /api/subscriptions/active - pagination', async () => {
+    // Create multiple subscriptions
+    for (let i = 0; i < 5; i++) {
+      await agent
+        .post('/api/subscriptions')
+        .set('x-csrf-token', csrfToken)
+        .send({
+          company_name: `Pagination Test ${i}`,
+          price: 100 * (i + 1),
+          subscription_type: 'monthly',
+          start_date: '2026-01-01'
+        });
+    }
+
+    const res = await agent.get('/api/subscriptions/active?limit=5&page=2');
+    expect(res.status).toBe(200);
+    expect(res.body.subscriptions.length).toBe(5);
+    expect(res.body.subscriptions[0].company_name).toBe('Pagination Test 0');
   });
 
   it('POST /api/subscriptions - success', async () => {
@@ -36,7 +55,7 @@ describe('Subscription Routes', () => {
     expect(res.body.price).toBe(1000);
   });
 
-  it.skip('POST /api/subscriptions - missing CSRF', async () => {
+  it('POST /api/subscriptions - missing CSRF', async () => {
     const res = await agent
       .post('/api/subscriptions')
       .send({});
@@ -53,7 +72,7 @@ describe('Subscription Routes', () => {
     expect(res.status).toBe(400);
   });
 
-  it('POST /api/subscriptions/:id/cancel', async (context) => {
+  it('POST /api/subscriptions/:id/cancel', async () => {
     // Create one first
     const insertRes = await agent
       .post('/api/subscriptions')
@@ -73,5 +92,60 @@ describe('Subscription Routes', () => {
     
     expect(res.status).toBe(200);
     expect(res.body.message).toBe('Subscription cancelled successfully.');
+  });
+
+  it('GET /api/subscriptions/history', async () => {
+    const res = await agent.get('/api/subscriptions/history');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('subscriptions');
+  });
+
+  it('PUT /api/subscriptions/:id - success', async () => {
+    // Create one first
+    const insertRes = await agent
+      .post('/api/subscriptions')
+      .set('x-csrf-token', csrfToken)
+      .send({
+        company_name: 'To Update',
+        price: 500,
+        subscription_type: 'monthly',
+        start_date: '2026-01-01'
+      });
+    
+    const subId = insertRes.body.id;
+
+    const res = await agent
+      .put(`/api/subscriptions/${subId}`)
+      .set('x-csrf-token', csrfToken)
+      .send({
+        company_name: 'Updated Name',
+        price: 600,
+        subscription_type: 'monthly',
+        start_date: '2026-01-01'
+      });
+    
+    expect(res.status).toBe(200);
+    expect(res.body.message).toBe('Subscription updated successfully.');
+  });
+
+  it('DELETE /api/subscriptions/:id - success', async () => {
+    // Create one first
+    const insertRes = await agent
+      .post('/api/subscriptions')
+      .set('x-csrf-token', csrfToken)
+      .send({
+        company_name: 'To Delete',
+        price: 500,
+        subscription_type: 'monthly',
+        start_date: '2026-01-01'
+      });
+    
+    const subId = insertRes.body.id;
+
+    const res = await agent
+      .delete(`/api/subscriptions/${subId}`)
+      .set('x-csrf-token', csrfToken);
+    
+    expect(res.status).toBe(204);
   });
 });

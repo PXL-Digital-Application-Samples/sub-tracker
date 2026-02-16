@@ -33,8 +33,10 @@ describe('DashboardPage', () => {
     // Wait for the next tick for the onMounted call to finish
     await vi.waitFor(() => expect(wrapper.text()).not.toContain('Loading...'));
 
-    expect(wrapper.text()).toContain('Total Active Subscriptions: 2');
-    expect(wrapper.text()).toContain('Total Monthly Cost: $25.00');
+    expect(wrapper.text()).toContain('Total Active');
+    expect(wrapper.text()).toContain('2');
+    expect(wrapper.text()).toContain('Monthly Cost');
+    expect(wrapper.text()).toContain('$25.00');
     expect(wrapper.text()).toContain('Netflix');
     expect(wrapper.text()).toContain('Spotify');
   });

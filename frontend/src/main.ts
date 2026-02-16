@@ -20,6 +20,8 @@ setUnauthorizedHandler(() => {
   router.push('/login');
 });
 
-initCsrf();
+// Await CSRF initialization before mounting the app
+await initCsrf();
+await authStore.checkSession();
 
 app.mount('#app')

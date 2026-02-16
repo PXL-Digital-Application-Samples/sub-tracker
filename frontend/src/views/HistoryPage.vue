@@ -7,24 +7,32 @@
       <div class="table-container" v-if="subscriptions.length">
         <table>
           <thead>
-          <tr>
-            <th>Company</th>
-            <th>Price</th>
-            <th>Type</th>
-            <th>Start Date</th>
-          </tr>
-        </thead>
-                <tbody>
-                  <tr v-for="sub in subscriptions" :key="sub.id">
-                    <td>{{ sub.company_name }}</td>
-                    <td>${{ formatPrice(sub.price) }}</td>
-                    <td>{{ sub.subscription_type }}</td>
-                    <td>{{ formatDate(sub.start_date) }}</td>
-                  </tr>
-                </tbody>                </table>
-              </div>
-              <p v-else>No historical subscriptions.</p>
-            </template>  </div>
+            <tr>
+              <th>Company</th>
+              <th>Price</th>
+              <th>Type</th>
+              <th>Start Date</th>
+              <th>Cancelled At</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="sub in subscriptions" :key="sub.id">
+              <td>{{ sub.company_name }}</td>
+              <td>${{ formatPrice(sub.price) }}</td>
+              <td>{{ sub.subscription_type }}</td>
+              <td>{{ formatDate(sub.start_date) }}</td>
+              <td>{{ formatDate(sub.cancelled_at!) }}</td>
+              <td>
+                <button class="btn-danger" @click="handleDelete(sub.id)">Delete</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p v-else>No historical subscriptions.</p>
+    </template>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -46,6 +54,17 @@ const fetchHistory = async () => {
     error.value = err.message;
   } finally {
     loading.value = false;
+  }
+};
+
+const handleDelete = async (id: number) => {
+  if (confirm('Are you sure you want to delete this subscription?')) {
+    try {
+      await api.deleteSubscription(id);
+      await fetchHistory();
+    } catch (err: any) {
+      error.value = err.message;
+    }
   }
 };
 

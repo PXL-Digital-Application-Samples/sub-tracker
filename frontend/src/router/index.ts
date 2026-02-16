@@ -5,6 +5,7 @@ import SubscriptionsPage from '../views/SubscriptionsPage.vue'
 import HistoryPage from '../views/HistoryPage.vue'
 import ProfilePage from '../views/ProfilePage.vue'
 import ChangePasswordPage from '../views/ChangePasswordPage.vue'
+import NotFoundPage from '../views/NotFoundPage.vue'
 import { useAuthStore } from '../stores/auth'
 
 const router = createRouter({
@@ -51,6 +52,11 @@ const router = createRouter({
       name: 'change-password',
       component: ChangePasswordPage,
       meta: { requiresAuth: true },
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'not-found',
+      component: NotFoundPage,
     },
   ],
 })

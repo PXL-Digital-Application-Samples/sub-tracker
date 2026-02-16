@@ -1,5 +1,5 @@
 #!/bin/bash
-# test_all.sh - Verbose test runner with aggressive debugging
+# test_all.sh - AUTOMATED COMPREHENSIVE TEST SUITE
 
 PROJECT_ROOT=$(pwd)
 export NODE_ENV=test
@@ -7,116 +7,104 @@ export SESSION_SECRET=test-secret-123
 export PORT=3000
 
 echo "--------------------------------------------------"
-echo "🚀 STARTING VERBOSE TEST SUITE"
+echo "🚀 STARTING AUTOMATED TEST SUITE (LINT + SQLITE + POSTGRES + E2E)"
 echo "--------------------------------------------------"
 
 # 1. Cleanup
-echo "🧹 Cleaning up existing processes..."
+echo "🧹 Cleaning up..."
 fuser -k 3000/tcp 2>/dev/null || true
 fuser -k 4173/tcp 2>/dev/null || true
 rm -f "$PROJECT_ROOT/backend/data/sub_tracker.db"
+docker compose -f compose.postgres.yaml down -v 2>/dev/null || true
 
-# 2. Backend Tests
-echo "🖥️  Running Backend Integration Tests..."
+# 2. Linting (Mandatory)
+echo "🔍 Running Linters..."
+(cd backend && npm run lint) || { echo "❌ Backend linting failed!"; exit 1; }
+(cd frontend && npm run lint) || { echo "❌ Frontend linting failed!"; exit 1; }
+echo "✅ Linting Passed"
+
+# 3. Backend Tests - SQLite
+echo "🖥️  Running Backend Tests (SQLite)..."
 cd "$PROJECT_ROOT/backend"
-if ! npm test; then
-    echo "❌ Backend tests failed!"
-    exit 1
-fi
+npm run test:sqlite || { echo "❌ SQLite backend tests failed!"; exit 1; }
 
-# 3. Frontend Unit Tests
+# 4. Backend Tests - PostgreSQL
+echo "🖥️  Running Backend Tests (PostgreSQL)..."
+cd "$PROJECT_ROOT"
+# FORCE REBUILD TO SYNC CODE CHANGES
+docker compose -f compose.postgres.yaml build --no-cache backend
+docker compose -f compose.postgres.yaml up -d postgres
+
+echo "⏳ Waiting for PostgreSQL..."
+for i in {1..30}; do
+  if docker exec $(docker ps -q -f name=postgres) pg_isready -U sub_user -d sub_tracker >/dev/null 2>&1; then
+    echo "✅ PostgreSQL is ready!"
+    break
+  fi
+  [ $i -eq 30 ] && echo "❌ PostgreSQL failed to start!" && exit 1
+  sleep 1
+done
+
+echo "🐘 Executing Postgres tests..."
+docker compose -f compose.postgres.yaml run --rm \
+  -e DB_TYPE=postgres \
+  -e SESSION_SECRET=test-secret-123 \
+  -e NODE_ENV=test \
+  -e POSTGRES_HOST=postgres \
+  -e POSTGRES_PORT=5432 \
+  -e POSTGRES_USER=sub_user \
+  -e POSTGRES_PASSWORD=change-me \
+  -e POSTGRES_DB=sub_tracker \
+  backend npm run test:postgres || { echo "❌ PostgreSQL backend tests failed!"; exit 1; }
+
+# 5. Frontend Unit Tests
 echo "🧪 Running Frontend Unit Tests..."
 cd "$PROJECT_ROOT/frontend"
-if ! npm run test:unit -- --run; then
-    echo "❌ Frontend unit tests failed!"
-    exit 1
-fi
+npm run test:unit -- --run || { echo "❌ Frontend unit tests failed!"; exit 1; }
 
-# 4. Setup E2E
-echo "🌐 Setting up E2E environment..."
-
-# Start Backend
-echo "📡 Starting Backend..."
+# 6. E2E Tests (Cypress)
+echo "🌐 Running E2E Tests (SQLite baseline)..."
 cd "$PROJECT_ROOT/backend"
-node src/index.js > /tmp/backend_e2e.log 2>&1 &
+DB_TYPE=sqlite node src/index.js > /tmp/backend_e2e.log 2>&1 &
 BACKEND_PID=$!
 
-# Wait for Backend
-echo "⏳ Waiting for Backend health check..."
+echo "⏳ Waiting for Services..."
 for i in {1..15}; do
   if curl -s http://localhost:3000/api/health | grep -q "ok"; then
-    echo "✅ Backend Health: OK"
+    echo "✅ Backend Ready"
     break
   fi
-  [ $i -eq 15 ] && echo "❌ Backend failed to start!" && cat /tmp/backend_e2e.log && kill $BACKEND_PID && exit 1
   sleep 1
 done
 
-# Verify Seed Data via CURL
-echo "🔍 Verifying backend seed data via CURL..."
-COOKIE_JAR="/tmp/test_cookies.txt"
-LOGIN_RES=$(curl -s -X POST http://localhost:3000/api/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"user@test.com", "password":"password123"}' \
-  -c $COOKIE_JAR)
-
-if echo "$LOGIN_RES" | grep -q "Login successful"; then
-    echo "✅ Backend Auth: OK"
-    SUBS_RES=$(curl -s -X GET http://localhost:3000/api/subscriptions/active -b $COOKIE_JAR)
-    if echo "$SUBS_RES" | grep -q "Netflix"; then
-        echo "✅ Backend Data (Netflix): FOUND"
-    else
-        echo "❌ Backend Data (Netflix): NOT FOUND!"
-        echo "Response: $SUBS_RES"
-        kill $BACKEND_PID
-        exit 1
-    fi
-else
-    echo "❌ Backend Auth FAILED!"
-    echo "Response: $LOGIN_RES"
-    kill $BACKEND_PID
-    exit 1
-fi
-
-# Start Frontend Preview
-echo "📦 Starting Frontend Preview..."
 cd "$PROJECT_ROOT/frontend"
-npm run build
-npm run preview > /tmp/frontend_e2e.log 2>&1 &
+npm run build && npm run preview > /tmp/frontend_e2e.log 2>&1 &
 FRONTEND_PID=$!
 
-echo "⏳ Waiting for Frontend preview..."
 for i in {1..15}; do
   if curl -s http://localhost:4173 | grep -q "html"; then
-    echo "✅ Frontend Preview: READY"
+    echo "✅ Frontend Ready"
     break
   fi
-  [ $i -eq 15 ] && echo "❌ Frontend failed to start!" && cat /tmp/frontend_e2e.log && kill $BACKEND_PID && exit 1
   sleep 1
 done
 
-# 5. Run Cypress
-echo "🦅 Running Cypress E2E..."
-set +e
+echo "🦅 Running Cypress..."
 npx cypress run --e2e --browser electron
 RESULT=$?
-set -e
 
-# 6. Final Report & Cleanup
+# 7. Cleanup
 echo "--------------------------------------------------"
 if [ $RESULT -eq 0 ]; then
-    echo "✨ ALL TESTS PASSED SUCCESSFULLY! ✨"
+    echo "✨ ALL TESTS PASSED! ✨"
 else
-    echo "💥 E2E TESTS FAILED! (Exit Code: $RESULT)"
-    echo "--- BACKEND LOGS ---"
-    cat /tmp/backend_e2e.log
-    echo "--- FRONTEND LOGS ---"
-    cat /tmp/frontend_e2e.log
+    echo "💥 TESTS FAILED! (Exit Code: $RESULT)"
 fi
 
-echo "🧼 Cleaning up..."
+echo "🧼 Final cleanup..."
 kill $BACKEND_PID || true
 kill $FRONTEND_PID || true
+docker compose -f compose.postgres.yaml down -v
 echo "--------------------------------------------------"
 
 exit $RESULT

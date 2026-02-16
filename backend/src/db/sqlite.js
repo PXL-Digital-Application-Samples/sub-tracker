@@ -1,19 +1,33 @@
-const Database = require('better-sqlite3');
 const path = require('path');
 
-const dbPath = path.resolve(__dirname, '../../data/sub_tracker.db');
-const db = new Database(dbPath);
+let _db;
+function getDbInstance() {
+  if (!_db) {
+    const dbType = process.env.DB_TYPE || 'sqlite';
+    if (dbType !== 'sqlite') {
+      throw new Error(`Attempted to initialize SQLite DB when DB_TYPE is ${dbType}`);
+    }
+    // Lazy require to avoid side effects in environments where better-sqlite3 cannot load
+    const Database = require('better-sqlite3');
+    const dbPath = process.env.DB_PATH || path.resolve(__dirname, '../../data/sub_tracker.db');
+    _db = new Database(dbPath);
+  }
+  return _db;
+}
 
 async function query(sql, params = []) {
-  return db.prepare(sql).all(params);
+  return getDbInstance().prepare(sql).all(params);
 }
 
 async function run(sql, params = []) {
-  return db.prepare(sql).run(params);
+  return getDbInstance().prepare(sql).run(params);
 }
 
 async function close() {
-  db.close();
+  if (_db) {
+    _db.close();
+    _db = null;
+  }
 }
 
 // Schema
@@ -64,7 +78,8 @@ async function findUserById(id) {
 
 async function insertUser({ email, password, first_name, last_name, zipcode }) {
   const sql = 'INSERT INTO users (email, password, first_name, last_name, zipcode) VALUES (?, ?, ?, ?, ?)';
-  return run(sql, [email, password, first_name, last_name, zipcode]);
+  const result = await run(sql, [email, password, first_name, last_name, zipcode]);
+  return findUserById(result.lastInsertRowid);
 }
 
 async function updateUser(id, { email, first_name, last_name, zipcode }) {
@@ -85,7 +100,7 @@ async function updatePassword(id, hashedPassword) {
 
 // Subscriptions
 async function getActiveSubscriptions(userId, limit = 20, offset = 0) {
-  const sql = 'SELECT * FROM subscriptions WHERE user_id = ? AND cancelled_at IS NULL LIMIT ? OFFSET ?';
+  const sql = 'SELECT * FROM subscriptions WHERE user_id = ? AND cancelled_at IS NULL ORDER BY id ASC LIMIT ? OFFSET ?';
   return query(sql, [userId, limit, offset]);
 }
 
@@ -96,7 +111,7 @@ async function countActiveSubscriptions(userId) {
 }
 
 async function getHistorySubscriptions(userId, limit = 20, offset = 0) {
-  const sql = 'SELECT * FROM subscriptions WHERE user_id = ? AND cancelled_at IS NOT NULL LIMIT ? OFFSET ?';
+  const sql = 'SELECT * FROM subscriptions WHERE user_id = ? AND cancelled_at IS NOT NULL ORDER BY id ASC LIMIT ? OFFSET ?';
   return query(sql, [userId, limit, offset]);
 }
 
@@ -104,6 +119,19 @@ async function countHistorySubscriptions(userId) {
   const sql = 'SELECT COUNT(*) as count FROM subscriptions WHERE user_id = ? AND cancelled_at IS NOT NULL';
   const rows = await query(sql, [userId]);
   return rows[0].count;
+}
+
+async function getSubscriptionSummaries(userId) {
+  const sql = `
+    SELECT 
+      SUM(CASE WHEN subscription_type = 'monthly' THEN price ELSE 0 END) as total_monthly_cost,
+      SUM(CASE WHEN subscription_type = 'yearly' THEN price ELSE 0 END) as total_yearly_cost,
+      COUNT(*) as total_active
+    FROM subscriptions 
+    WHERE user_id = ? AND cancelled_at IS NULL
+  `;
+  const rows = await query(sql, [userId]);
+  return rows[0] || { total_monthly_cost: 0, total_yearly_cost: 0, total_active: 0 };
 }
 
 async function cancelSubscription(id, userId) {
@@ -145,9 +173,10 @@ module.exports = {
   countActiveSubscriptions,
   getHistorySubscriptions,
   countHistorySubscriptions,
+  getSubscriptionSummaries,
   insertSubscription,
   updateSubscription,
   deleteSubscription,
   cancelSubscription,
-  db,
+  get db() { return getDbInstance(); },
 };

@@ -8,31 +8,40 @@
       <div class="table-container" v-if="subscriptions.length">
         <table>
           <thead>
-          <tr>
-            <th>Company</th>
-            <th>Price</th>
-            <th>Type</th>
-            <th>Start Date</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
+            <tr>
+              <th>Company</th>
+              <th>Price</th>
+              <th>Type</th>
+              <th>Start Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
           <tr v-for="sub in subscriptions" :key="sub.id">
             <td>{{ sub.company_name }}</td>
             <td>${{ formatPrice(sub.price) }}</td>
             <td>{{ sub.subscription_type }}</td>
             <td>{{ formatDate(sub.start_date) }}</td>
-                      <td>
-                        <button @click="openEditModal(sub)">Edit</button>
-                        <button @click="handleCancel(sub.id)">Cancel</button>
-                        <button @click="handleDelete(sub.id)">Delete</button>
-                      </td>          </tr>
-                  </tbody>
-                </table>
+            <td>
+              <div class="actions" style="margin-top: 0">
+                <button @click="openEditModal(sub)">Edit</button>
+                <button class="btn-warning" @click="handleCancel(sub.id)">Cancel</button>
+                <button class="btn-danger" @click="handleDelete(sub.id)">Delete</button>
               </div>
-              <p v-else>No active subscriptions.</p>
-            </template>
-    <SubscriptionModal
+            </td>
+          </tr>
+                  </tbody>
+                        </table>
+                      </div>
+                      <p v-else>No active subscriptions.</p>
+                
+                      <div class="pagination" v-if="totalPages > 1">
+                        <button :disabled="currentPage === 1" @click="fetchSubscriptions(currentPage - 1)">Previous</button>
+                        <span>Page {{ currentPage }} of {{ totalPages }}</span>
+                        <button :disabled="currentPage === totalPages" @click="fetchSubscriptions(currentPage + 1)">Next</button>
+                      </div>
+                    </template>
+                    <SubscriptionModal
       v-if="isModalOpen"
       :subscription="selectedSubscription"
       @close="closeModal"
@@ -60,13 +69,18 @@ const isModalOpen = ref(false);
 const selectedSubscription = ref<Subscription | null>(null);
 const router = useRouter();
 
-const fetchSubscriptions = async () => {
+const currentPage = ref(1);
+const totalPages = ref(1);
+
+const fetchSubscriptions = async (page = 1) => {
   try {
     loading.value = true;
-    const response = await api.getActiveSubscriptions();
+    const response = await api.getActiveSubscriptions(page);
     subscriptions.value = response.subscriptions;
+    totalPages.value = response.totalPages;
+    currentPage.value = response.page;
 
-    if (props.id) {
+    if (props.id && page === 1) {
       const subToEdit = subscriptions.value.find(s => s.id === parseInt(props.id!, 10));
       if (subToEdit) {
         openEditModal(subToEdit);

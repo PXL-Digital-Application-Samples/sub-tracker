@@ -1,12 +1,9 @@
 
-const sqlite = require('./sqlite');
-const postgres = require('./postgres');
-
 function getDb() {
   if (process.env.DB_TYPE === 'postgres') {
-    return postgres;
+    return require('./postgres');
   }
-  return sqlite;
+  return require('./sqlite');
 }
 
 module.exports = getDb();

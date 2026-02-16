@@ -1,29 +1,33 @@
 <template>
-  <div>
-    <h1>Profile</h1>
-    <div v-if="loading">Loading...</div>
-    <div v-else-if="error">{{ error }}</div>
-    <form v-else-if="user" @submit.prevent="handleUpdate">
-      <div>
-        <label>Email</label>
-        <input type="email" v-model="user.email" required />
+  <div class="container-narrow">
+    <div class="card">
+      <h1>Profile</h1>
+      <div v-if="loading">Loading...</div>
+      <div v-else-if="error" class="error">{{ error }}</div>
+      <form v-else-if="user" @submit.prevent="handleUpdate">
+        <div>
+          <label>Email</label>
+          <input type="email" name="email" v-model="user.email" required />
+        </div>
+        <div>
+          <label>First Name</label>
+          <input name="first_name" v-model="user.first_name" required />
+        </div>
+        <div>
+          <label>Last Name</label>
+          <input name="last_name" v-model="user.last_name" required />
+        </div>
+        <div>
+          <label>Zipcode</label>
+          <input name="zipcode" v-model="user.zipcode" required />
+        </div>
+        <p v-if="successMessage" class="success">{{ successMessage }}</p>
+        <button type="submit">Save Changes</button>
+      </form>
+      <div class="actions">
+        <router-link to="/profile/password">Change Password</router-link>
       </div>
-      <div>
-        <label>First Name</label>
-        <input v-model="user.first_name" required />
-      </div>
-      <div>
-        <label>Last Name</label>
-        <input v-model="user.last_name" required />
-      </div>
-      <div>
-        <label>Zipcode</label>
-        <input v-model="user.zipcode" required />
-      </div>
-      <p v-if="successMessage" class="success">{{ successMessage }}</p>
-      <button type="submit">Save Changes</button>
-    </form>
-    <router-link to="/profile/password">Change Password</router-link>
+    </div>
   </div>
 </template>
 

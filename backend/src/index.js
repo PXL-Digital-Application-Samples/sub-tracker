@@ -52,8 +52,9 @@ app.use(session({
   },
 }));
 
-const { doubleCsrfProtection, generateToken } = doubleCsrf({
+const { doubleCsrfProtection, generateCsrfToken } = doubleCsrf({
   getSecret: () => sessionSecret,
+  getSessionIdentifier: (req) => req.session.id,
   cookieName: '_csrf',
   cookieOptions: {
     sameSite: 'lax',
@@ -63,14 +64,15 @@ const { doubleCsrfProtection, generateToken } = doubleCsrf({
 });
 
 app.get('/api/csrf-token', (req, res) => {
-  res.json({ token: generateToken ? generateToken(req, res) : 'test-token' });
+  const token = generateCsrfToken(req, res);
+  res.json({ token });
 });
 
 app.use('/api', authRouter);
-app.use('/api', process.env.NODE_ENV === 'test' ? (req, res, next) => next() : doubleCsrfProtection, userRouter);
-app.use('/api', process.env.NODE_ENV === 'test' ? (req, res, next) => next() : doubleCsrfProtection, subscriptionsRouter);
+app.use('/api', doubleCsrfProtection, userRouter);
+app.use('/api', doubleCsrfProtection, subscriptionsRouter);
 
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
   logger.error({ err }, 'Unhandled error');
   res.status(err.status || 500).json({
     message: process.env.NODE_ENV === 'production'
@@ -84,7 +86,9 @@ let server;
 async function startServer() {
   try {
     await createTables();
-    await seedData();
+    if (process.env.NODE_ENV !== 'production') {
+      await seedData();
+    }
 
     server = app.listen(port, () => {
       logger.info({ port }, 'Server started');
@@ -99,8 +103,11 @@ async function startServer() {
 async function shutdown(signal) {
   logger.info({ signal }, 'Shutdown signal received');
   if (server) {
-    server.close(() => {
-      logger.info('HTTP server closed');
+    await new Promise((resolve) => {
+      server.close(() => {
+        logger.info('HTTP server closed');
+        resolve();
+      });
     });
   }
   if (db && db.close) {
@@ -114,7 +121,7 @@ process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));
 
 if (require.main === module) {
-  startServer().catch(err => {
+  startServer().catch(_err => {
     process.exit(1);
   });
 }

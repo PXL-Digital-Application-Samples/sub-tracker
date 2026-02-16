@@ -16,25 +16,17 @@ router.get('/subscriptions/active', async (req, res) => {
 
   try {
     const subscriptions = await db.getActiveSubscriptions(req.session.userId, limit, offset);
-    const total = await db.countActiveSubscriptions(req.session.userId);
+    const summaries = await db.getSubscriptionSummaries(req.session.userId);
     
-    const total_active = total;
-    // Note: summary costs might need a separate non-paginated query if they should reflect ALL active subs.
-    // The plan doesn't specify this, but usually summary should be for everything.
-    // I'll stick to the plan's suggestion of adding metadata to the response.
-    const allActive = await db.getActiveSubscriptions(req.session.userId, 1000, 0);
-    const total_monthly_cost = allActive.reduce((acc, sub) => sub.subscription_type === 'monthly' ? acc + sub.price : acc, 0);
-    const total_yearly_cost = allActive.reduce((acc, sub) => sub.subscription_type === 'yearly' ? acc + sub.price : acc, 0);
-
     res.json({
       subscriptions,
-      total,
+      total: summaries.total_active,
       page,
       limit,
-      totalPages: Math.ceil(total / limit),
-      total_active,
-      total_monthly_cost,
-      total_yearly_cost,
+      totalPages: Math.ceil(summaries.total_active / limit),
+      total_active: summaries.total_active,
+      total_monthly_cost: summaries.total_monthly_cost,
+      total_yearly_cost: summaries.total_yearly_cost,
     });
   } catch (error) {
     logger.error({ err: error }, 'Get active subscriptions error');

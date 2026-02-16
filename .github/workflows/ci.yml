@@ -78,3 +78,27 @@ jobs:
           cache-dependency-path: backend/package-lock.json
       - run: cd backend && npm ci
       - run: cd backend && npm test
+
+  e2e-test:
+    runs-on: ubuntu-latest
+    env:
+      SESSION_SECRET: ci-test-secret
+      NODE_ENV: test
+      CORS_ORIGINS: http://localhost:4173
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+      - name: Install Backend Dependencies
+        run: cd backend && npm ci
+      - name: Install Frontend Dependencies
+        run: cd frontend && npm ci
+      - name: Run E2E Tests
+        run: |
+          cd backend && npm start &
+          cd frontend && npm run test:e2e

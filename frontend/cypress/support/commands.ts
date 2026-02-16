@@ -1,39 +1,28 @@
 /// <reference types="cypress" />
-// ***********************************************
-// This example commands.ts shows you how to
-// create various custom commands and overwrite
-// existing commands.
-//
-// For more comprehensive examples of custom
-// commands please read more here:
-// https://on.cypress.io/custom-commands
-// ***********************************************
-//
-//
-// -- This is a parent command --
-// Cypress.Commands.add('login', (email, password) => { ... })
-//
-//
-// -- This is a child command --
-// Cypress.Commands.add('drag', { prevSubject: 'element'}, (subject, options) => { ... })
-//
-//
-// -- This is a dual command --
-// Cypress.Commands.add('dismiss', { prevSubject: 'optional'}, (subject, options) => { ... })
-//
-//
-// -- This will overwrite an existing command --
-// Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
-//
-// declare global {
-//   namespace Cypress {
-//     interface Chainable {
-//       login(email: string, password: string): Chainable<void>
-//       drag(subject: string, options?: Partial<TypeOptions>): Chainable<Element>
-//       dismiss(subject: string, options?: Partial<TypeOptions>): Chainable<Element>
-//       visit(originalFn: CommandOriginalFn, url: string, options: Partial<VisitOptions>): Chainable<Element>
-//     }
-//   }
-// }
+
+Cypress.Commands.add('login', (email = 'user@test.com', password = 'password123') => {
+  // Clear cookies to force a fresh login attempt, avoiding "already logged in" ambiguity
+  cy.clearCookies();
+  cy.visit('/login');
+  
+  // Ensure we are on the login page
+  cy.contains('h1', 'Login').should('be.visible');
+  
+  cy.get('[data-testid="email"]').clear().type(email);
+  cy.get('[data-testid="password"]').clear().type(password);
+  cy.get('button[type="submit"]').click();
+  
+  // Explicitly wait for redirection to Dashboard
+  cy.url().should('eq', Cypress.config().baseUrl + '/');
+  cy.contains('Dashboard').should('be.visible');
+});
+
+declare global {
+  namespace Cypress {
+    interface Chainable {
+      login(email?: string, password?: string): Chainable<void>
+    }
+  }
+}
 
 export {}

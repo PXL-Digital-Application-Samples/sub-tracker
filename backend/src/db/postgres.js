@@ -1,8 +1,8 @@
 const { Pool } = require('pg');
 
 const pool = new Pool({
-  host: process.env.POSTGRES_HOST,
-  port: process.env.POSTGRES_PORT,
+  host: process.env.POSTGRES_HOST || '127.0.0.1',
+  port: process.env.POSTGRES_PORT || 5432,
   user: process.env.POSTGRES_USER,
   password: process.env.POSTGRES_PASSWORD,
   database: process.env.POSTGRES_DB,
@@ -79,8 +79,9 @@ async function findUserById(id) {
 }
 
 async function insertUser({ email, password, first_name, last_name, zipcode }) {
-  const sql = 'INSERT INTO users (email, password, first_name, last_name, zipcode) VALUES ($1, $2, $3, $4, $5)';
-  return run(sql, [email, password, first_name, last_name, zipcode]);
+  const sql = 'INSERT INTO users (email, password, first_name, last_name, zipcode) VALUES ($1, $2, $3, $4, $5) RETURNING id, email, first_name, last_name, zipcode';
+  const result = await run(sql, [email, password, first_name, last_name, zipcode]);
+  return result.rows[0];
 }
 
 async function updateUser(id, { email, first_name, last_name, zipcode }) {
@@ -101,7 +102,7 @@ async function updatePassword(id, hashedPassword) {
 
 // Subscriptions
 async function getActiveSubscriptions(userId, limit = 20, offset = 0) {
-  const sql = 'SELECT * FROM subscriptions WHERE user_id = $1 AND cancelled_at IS NULL LIMIT $2 OFFSET $3';
+  const sql = 'SELECT * FROM subscriptions WHERE user_id = $1 AND cancelled_at IS NULL ORDER BY id ASC LIMIT $2 OFFSET $3';
   return query(sql, [userId, limit, offset]);
 }
 
@@ -112,7 +113,7 @@ async function countActiveSubscriptions(userId) {
 }
 
 async function getHistorySubscriptions(userId, limit = 20, offset = 0) {
-  const sql = 'SELECT * FROM subscriptions WHERE user_id = $1 AND cancelled_at IS NOT NULL LIMIT $2 OFFSET $3';
+  const sql = 'SELECT * FROM subscriptions WHERE user_id = $1 AND cancelled_at IS NOT NULL ORDER BY id ASC LIMIT $2 OFFSET $3';
   return query(sql, [userId, limit, offset]);
 }
 
@@ -120,6 +121,23 @@ async function countHistorySubscriptions(userId) {
   const sql = 'SELECT COUNT(*) as count FROM subscriptions WHERE user_id = $1 AND cancelled_at IS NOT NULL';
   const rows = await query(sql, [userId]);
   return parseInt(rows[0].count);
+}
+
+async function getSubscriptionSummaries(userId) {
+  const sql = `
+    SELECT 
+      COALESCE(SUM(CASE WHEN subscription_type = 'monthly' THEN price ELSE 0 END), 0) as total_monthly_cost,
+      COALESCE(SUM(CASE WHEN subscription_type = 'yearly' THEN price ELSE 0 END), 0) as total_yearly_cost,
+      COUNT(*) as total_active
+    FROM subscriptions 
+    WHERE user_id = $1 AND cancelled_at IS NULL
+  `;
+  const rows = await query(sql, [userId]);
+  return {
+    total_monthly_cost: parseInt(rows[0].total_monthly_cost),
+    total_yearly_cost: parseInt(rows[0].total_yearly_cost),
+    total_active: parseInt(rows[0].total_active),
+  };
 }
 
 async function cancelSubscription(id, userId) {
@@ -159,6 +177,7 @@ module.exports = {
   countActiveSubscriptions,
   getHistorySubscriptions,
   countHistorySubscriptions,
+  getSubscriptionSummaries,
   insertSubscription,
   updateSubscription,
   deleteSubscription,

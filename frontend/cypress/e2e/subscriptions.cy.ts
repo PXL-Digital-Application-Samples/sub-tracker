@@ -1,22 +1,11 @@
 describe('Subscriptions', () => {
   beforeEach(() => {
-    // Login before each test
-    cy.visit('/login');
-    cy.get('input[type="email"]').type('user@test.com');
-    cy.get('input[type="password"]').type('password123');
-    cy.get('button[type="submit"]').click();
-    cy.url().should('eq', Cypress.config().baseUrl + '/');
+    cy.login();
     cy.visit('/subscriptions');
     cy.contains('h1', 'Active Subscriptions');
   });
 
   it('displays active subscriptions', () => {
-    cy.get('body').then(($body) => {
-      if ($body.find('.error').length) {
-        cy.log('ERROR FOUND ON PAGE:', $body.find('.error').text());
-      }
-    });
-    // Wait longer for the data to load
     cy.contains('Netflix', { timeout: 10000 });
     cy.contains('Spotify');
   });
@@ -27,7 +16,57 @@ describe('Subscriptions', () => {
     cy.get('input[type="number"]').type('999');
     cy.get('select').select('monthly');
     cy.get('input[type="date"]').type('2026-01-01');
-    cy.contains('Create').click();
+    cy.contains('button', 'Create').click();
     cy.contains('Cypress Test Service');
+  });
+
+  it('edits an existing subscription', () => {
+    cy.contains('Netflix', { timeout: 10000 });
+    
+    // Force click to avoid "hidden from view" errors
+    cy.contains('tr', 'Netflix').within(() => {
+      cy.contains('Edit').click({ force: true });
+    });
+
+    cy.get('input[required]').first().clear().type('Netflix Updated');
+    cy.get('input[type="number"]').clear().type('1599');
+    cy.contains('button', 'Update').click();
+
+    cy.contains('Netflix Updated');
+    cy.contains('$15.99');
+  });
+
+  it('cancels a subscription', () => {
+    cy.contains('Spotify', { timeout: 10000 });
+
+    cy.on('window:confirm', () => true);
+
+    cy.contains('tr', 'Spotify').within(() => {
+      cy.contains('Cancel').click({ force: true });
+    });
+
+    cy.contains('Spotify').should('not.exist');
+
+    cy.visit('/history');
+    cy.contains('Spotify');
+  });
+
+  it('deletes a subscription', () => {
+    // Add a throwaway sub to delete
+    cy.contains('Add Subscription').click();
+    cy.get('input[required]').first().type('To Be Deleted');
+    cy.get('input[type="number"]').type('100');
+    cy.get('select').select('monthly');
+    cy.get('input[type="date"]').type('2026-01-01');
+    cy.contains('button', 'Create').click();
+    cy.contains('To Be Deleted');
+
+    cy.on('window:confirm', () => true);
+
+    cy.contains('tr', 'To Be Deleted').within(() => {
+      cy.contains('Delete').click({ force: true });
+    });
+
+    cy.contains('To Be Deleted').should('not.exist');
   });
 });

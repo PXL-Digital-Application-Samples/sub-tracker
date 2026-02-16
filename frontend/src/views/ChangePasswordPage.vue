@@ -1,23 +1,28 @@
 <template>
-  <div>
-    <h1>Change Password</h1>
-    <form @submit.prevent="handleChangePassword">
-      <div>
-        <label for="oldPassword">Old Password:</label>
-        <input type="password" id="oldPassword" v-model="oldPassword" required />
+  <div class="container-narrow">
+    <div class="card">
+      <h1>Change Password</h1>
+      <form @submit.prevent="handleChangePassword">
+        <div>
+          <label for="oldPassword">Old Password:</label>
+          <input type="password" id="oldPassword" name="oldPassword" data-testid="old-password" v-model="oldPassword" required />
+        </div>
+        <div>
+          <label for="newPassword">New Password:</label>
+          <input type="password" id="newPassword" name="newPassword" v-model="newPassword" required />
+        </div>
+        <div>
+          <label for="confirmPassword">Confirm New Password:</label>
+          <input type="password" id="confirmPassword" name="confirmPassword" v-model="confirmPassword" required />
+        </div>
+        <p v-if="error" class="error">{{ error }}</p>
+        <p v-if="successMessage" class="success">{{ successMessage }}</p>
+        <button type="submit">Change Password</button>
+      </form>
+      <div class="actions">
+        <router-link to="/profile">Back to Profile</router-link>
       </div>
-      <div>
-        <label for="newPassword">New Password:</label>
-        <input type="password" id="newPassword" v-model="newPassword" required />
-      </div>
-      <div>
-        <label for="confirmPassword">Confirm New Password:</label>
-        <input type="password" id="confirmPassword" v-model="confirmPassword" required />
-      </div>
-      <p v-if="error" class="error">{{ error }}</p>
-      <p v-if="successMessage" class="success">{{ successMessage }}</p>
-      <button type="submit">Change Password</button>
-    </form>
+    </div>
   </div>
 </template>
 

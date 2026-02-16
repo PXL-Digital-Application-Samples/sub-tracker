@@ -2,8 +2,12 @@ const { app, startServer } = require('../index');
 const supertest = require('supertest');
 const db = require('../db');
 const bcrypt = require('bcrypt');
+const path = require('path');
 
 let serverStarted = false;
+
+// Use a separate test database for each run to avoid state leakage
+process.env.DB_PATH = path.resolve(__dirname, `../../data/test_${Date.now()}.db`);
 
 async function ensureServer() {
   if (!serverStarted) {
@@ -31,15 +35,15 @@ async function createTestAgent() {
     });
   }
 
-  // Get CSRF token
-  const csrfRes = await agent.get('/api/csrf-token');
-  const csrfToken = csrfRes.body.token;
-
-  // Login
+  // Login first
   await agent
     .post('/api/login')
     .send({ email, password });
-    
+
+  // Get CSRF token AFTER login
+  const csrfRes = await agent.get('/api/csrf-token');
+  const csrfToken = csrfRes.body.token;
+  
   return { agent, csrfToken };
 }
 

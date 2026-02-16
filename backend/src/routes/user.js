@@ -33,6 +33,11 @@ router.put('/user', requireAuth, userUpdateValidation, validate, async (req, res
   const { email, first_name, last_name, zipcode } = req.body;
 
   try {
+    const existingUser = await db.findUserByEmail(email);
+    if (existingUser && existingUser.id !== req.session.userId) {
+      return res.status(409).json({ message: 'Email already in use by another user.' });
+    }
+
     await db.updateUser(req.session.userId, { email, first_name, last_name, zipcode });
     res.json({ message: 'User updated successfully.' });
   } catch (error) {

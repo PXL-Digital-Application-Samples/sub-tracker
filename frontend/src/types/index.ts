@@ -14,6 +14,7 @@ export interface Subscription {
   price: number;
   subscription_type: 'monthly' | 'yearly' | 'lifetime';
   start_date: string;
+  cancelled_at: string | null;
   created_at: string;
 }
 
