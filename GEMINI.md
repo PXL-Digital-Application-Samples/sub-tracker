@@ -13,18 +13,20 @@ Current features:
 - Dashboard with analytics (monthly/yearly cost totals)
 - Separation of active and historical (cancelled) subscriptions
 - Docker Compose deployment for both database variants
-- **Automated Dual-DB Test Suite:** Backend integration tests run against both SQLite and PostgreSQL.
+- **Automated Dual-DB Test Suite:** Comprehensive coverage across SQLite and PostgreSQL.
 - **Dedicated Test Setups:** Isolated environments using `vitest.sqlite.js` and `vitest.postgres.js`.
 - **Architectural Verification:** Specific tests for DB Factory logic and CSRF token regeneration.
 - **Full E2E Coverage:** Cypress tests cover Auth, Dashboard, Profile, and Subscriptions.
-- **Mandatory Linting:** ESLint + Prettier enforced for local and CI parity.
+- **Standardized Orchestration:** Cross-platform NPM scripts and workspaces replace brittle shell scripts.
 
 ## Project Structure
 
-The project is structured as a monorepo:
+The project is structured as a monorepo using **NPM Workspaces**:
 
 ```
 /
+├── package.json                 # Root manifest with orchestration scripts
+├── scripts/                     # Cross-platform Node.js orchestration scripts
 ├── frontend/                    # Vue 3 + Vite + TypeScript application
 │   ├── cypress/
 │   │   └── e2e/                 # E2E test files
@@ -42,7 +44,6 @@ The project is structured as a monorepo:
 │           ├── sqlite.js        # SQLite adapter (Hardened lazy-loading)
 │           ├── postgres.js      # PostgreSQL adapter
 │           └── ...
-├── test_all.sh                  # Fully automated dual-DB test suite
 ├── compose.yaml                 # Docker Compose — SQLite variant
 ├── compose.postgres.yaml        # Docker Compose — PostgreSQL variant
 └── ...
@@ -58,30 +59,23 @@ The project is structured as a monorepo:
 
 ## Testing & Quality Assurance
 
-The project enforces high code quality through isolated, environment-aware testing.
-
-### Full Automated Suite
-Run the following command to execute the entire quality pipeline:
-```bash
-./test_all.sh
-```
-*Note: This script handles Docker `build --no-cache` and container lifecycles automatically.*
+The project enforces high code quality through isolated, environment-aware testing using `npm test` from the root.
 
 ### Backend Tests
 - **Architectural Isolation:** `src/__tests__/db/factory.test.js` verifies DB switching logic.
-- **SQLite:** `npm run test:sqlite` (Uses `vitest.sqlite.js`).
-- **PostgreSQL:** `npm run test:postgres` (Uses `vitest.postgres.js` inside Docker).
+- **SQLite:** `npm run test:backend:sqlite` (Uses `vitest.sqlite.js`).
+- **PostgreSQL:** `npm run test:backend:postgres` (Handles Docker lifecycle automatically).
 
 ### Frontend Tests
-- **Linting:** `cd frontend && npm run lint` (ESLint + oxlint).
-- **Unit/Component:** `cd frontend && npm run test:unit`.
-- **E2E (Cypress):** `cd frontend && npx cypress run`.
+- **Linting:** `npm run lint` (ESLint + oxlint + prettier).
+- **Unit/Component:** `npm run test:frontend`.
+- **E2E (Cypress):** `npm run test:e2e` (Handles full environment setup and cleanup).
 
 ## Development Conventions
 
+-   **Orchestration:** Avoid bash scripts; use Node.js scripts in `scripts/` for complex tasks.
 -   **Database abstraction:** All SQL is encapsulated within `backend/src/db/sqlite.js` and `backend/src/db/postgres.js`.
--   **PostgreSQL Connection:** Supports both individual environment variables and a single `DATABASE_URL` connection string (ideal for RDS).
--   **Hardened Lazy Loading:** `sqlite.js` throw an error if accessed while `DB_TYPE` is not `sqlite`.
+-   **Hardened Lazy Loading:** `sqlite.js` throws an error if accessed while `DB_TYPE` is not `sqlite`.
 -   **CSRF Security:** Fresh tokens are generated and returned upon successful login to bind to the new session.
 -   **Stable Results:** All database queries in tests use `ORDER BY id ASC`.
 
