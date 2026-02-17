@@ -44,11 +44,12 @@ const seedData = async () => {
       const now = new Date().toISOString().slice(0, 10);
 
       const subs = [
-        { company_name: 'Netflix', description: 'Premium Plan', price: 1999, subscription_type: 'monthly', start_date: now },
-        { company_name: 'Spotify', description: 'Family Plan', price: 1599, subscription_type: 'monthly', start_date: now },
-        { company_name: 'Gym Membership', description: 'Annual contract', price: 40000, subscription_type: 'yearly', start_date: now },
-        { company_name: 'Phone Subscription', description: 'Unlimited data', price: 5000, subscription_type: 'monthly', start_date: now },
-        { company_name: 'ChatGPT Plus', description: 'AI assistant', price: 2000, subscription_type: 'monthly', start_date: now },
+        { company_name: 'Netflix', description: 'Premium', price: 2199, subscription_type: 'monthly', start_date: now },
+        { company_name: 'Spotify', description: 'Premium Family', price: 2099, subscription_type: 'monthly', start_date: now },
+        { company_name: 'Mobile Vikings', description: '30 GB (4G/5G)', price: 1500, subscription_type: 'monthly', start_date: now },
+        { company_name: 'Google AI Pro', description: 'Gemini Advanced (+2 TB storage)', price: 2199, subscription_type: 'monthly', start_date: now },
+        { company_name: 'Telenet unlimited', description: 'Internet (Unlimited)', price: 6510, subscription_type: 'monthly', start_date: now },
+        { company_name: 'Amazon Prime', description: 'Video, delivery & more', price: 2500, subscription_type: 'yearly', start_date: now },
       ];
 
       for (const sub of subs) {
