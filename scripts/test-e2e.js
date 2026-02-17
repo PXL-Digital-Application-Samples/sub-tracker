@@ -32,7 +32,8 @@ async function runE2E() {
 
     // 5. Run Cypress
     console.log('🦅 Running Cypress...');
-    const cypress = spawn('npx', ['cypress', 'run', '--project', './frontend'], { stdio: 'inherit', shell: true });
+    const cypressBin = path.join(__dirname, '../frontend/node_modules/.bin/cypress');
+    const cypress = spawn(cypressBin, ['run', '--project', './frontend'], { stdio: 'inherit', shell: true });
     
     const exitCode = await new Promise((resolve) => cypress.on('close', resolve));
     

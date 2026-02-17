@@ -3,6 +3,7 @@ describe('Subscriptions', () => {
     cy.login();
     cy.visit('/subscriptions');
     cy.contains('h1', 'Active Subscriptions');
+    cy.contains('Loading...').should('not.exist');
   });
 
   it('displays active subscriptions', () => {
@@ -30,7 +31,7 @@ describe('Subscriptions', () => {
 
     cy.get('input[required]').first().clear().type('Netflix Updated');
     cy.get('input[type="number"]').clear().type('1599');
-    cy.contains('button', 'Update').click();
+    cy.contains('button', 'Save').click();
 
     cy.contains('Netflix Updated');
     cy.contains('$15.99');

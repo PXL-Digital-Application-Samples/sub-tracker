@@ -10,7 +10,7 @@
     "lint": "npm run lint --workspaces",
     "test:backend:sqlite": "npm run test:sqlite --workspace=backend",
     "test:backend:postgres": "node scripts/test-postgres.js",
-    "test:frontend": "npm run test:unit --workspace=frontend",
+    "test:frontend": "npm run test:unit:ci --workspace=frontend",
     "test:e2e": "node scripts/test-e2e.js",
     "test": "npm run lint && npm run test:backend:sqlite && npm run test:backend:postgres && npm run test:frontend && npm run test:e2e"
   },

@@ -30,10 +30,11 @@ describe('User Profile', () => {
 
   it('changes user password', () => {
     cy.visit('/profile/password');
-    cy.get('[data-testid="old-password"]').type('password123');
+    cy.contains('h1', 'Change Password');
+    cy.get('input[name="oldPassword"]').type('password123');
     cy.get('input[name="newPassword"]').type('newpassword123');
     cy.get('input[name="confirmPassword"]').type('newpassword123');
-    cy.get('button[type="submit"]').click({ force: true });
+    cy.get('button[type="submit"]').click();
 
     cy.contains('Password changed successfully').should('be.visible');
 
