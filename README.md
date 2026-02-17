@@ -91,6 +91,36 @@ The `DB_TYPE` environment variable controls which database is used. There are tw
 | SQLite     | `sqlite`        | `compose.yaml` (default)    | Development, single user |
 | PostgreSQL | `postgres`      | `compose.postgres.yaml`     | Production, multi-user   |
 
+### Customizing the SQLite file location
+
+By default the SQLite database is stored at `backend/data/sub_tracker.db`. Set the `DB_PATH` environment variable to use a different path:
+
+```env
+# Absolute path (Linux / macOS / cloud)
+DB_PATH=/mnt/storage/sub_tracker.db
+
+# Absolute path (Windows)
+DB_PATH=C:\Users\tom\AppData\sub_tracker.db
+
+# Relative path (resolved from the backend working directory)
+DB_PATH=./data/sub_tracker.db
+```
+
+When running in Docker, pair `DB_PATH` with a volume mount so the data persists:
+
+```yaml
+# compose.yaml
+backend:
+  environment:
+    DB_PATH: /data/sub_tracker.db
+  volumes:
+    - /my/host/path:/data          # bind mount
+    # or use a named volume:
+    # - backend-data:/data
+```
+
+The parent directory is created automatically if it does not exist.
+
 ### Running without Docker
 
 If you prefer to run the app directly on your machine:
@@ -238,6 +268,7 @@ docker compose up -d
 | ---------------------- | -------- | ---------------- | ------------------------------------ |
 | `SESSION_SECRET`       | Yes      | —                | Secret for signing session cookies   |
 | `DB_TYPE`              | No       | `sqlite`         | `sqlite` or `postgres`              |
+| `DB_PATH`              | No       | `data/sub_tracker.db` | File path for the SQLite database (only used when `DB_TYPE` is `sqlite`) |
 | `POSTGRES_HOST`        | If PG    | —                | PostgreSQL hostname                  |
 | `POSTGRES_USER`        | If PG    | —                | PostgreSQL username                  |
 | `POSTGRES_PASSWORD`    | If PG    | —                | PostgreSQL password                  |

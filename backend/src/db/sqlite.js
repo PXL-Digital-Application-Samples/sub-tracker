@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 
 let _db;
 function getDbInstance() {
@@ -10,6 +11,7 @@ function getDbInstance() {
     // Lazy require to avoid side effects in environments where better-sqlite3 cannot load
     const Database = require('better-sqlite3');
     const dbPath = process.env.DB_PATH || path.resolve(__dirname, '../../data/sub_tracker.db');
+    fs.mkdirSync(path.dirname(dbPath), { recursive: true });
     _db = new Database(dbPath);
   }
   return _db;
