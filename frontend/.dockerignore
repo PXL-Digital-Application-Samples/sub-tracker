@@ -10,13 +10,3 @@ src/__tests__
 cypress
 cypress.config.ts
 vitest.config.ts
-tsconfig.json
-tsconfig.app.json
-tsconfig.node.json
-tsconfig.vitest.json
-eslint.config.ts
-.prettierrc.json
-.oxlintrc.json
-.editorconfig
-.gitattributes
-
