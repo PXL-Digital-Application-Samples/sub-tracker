@@ -30,7 +30,7 @@ describe('Subscription Routes', () => {
         });
     }
 
-    const res = await agent.get('/api/subscriptions/active?limit=5&page=2');
+    const res = await agent.get('/api/subscriptions/active?limit=6&page=2');
     expect(res.status).toBe(200);
     expect(res.body.subscriptions.length).toBe(5);
     expect(res.body.subscriptions[0].company_name).toBe('Pagination Test 0');
