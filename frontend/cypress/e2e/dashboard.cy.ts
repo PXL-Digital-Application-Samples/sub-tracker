@@ -19,7 +19,7 @@ describe('Dashboard', () => {
       cy.visit('/subscriptions');
       cy.contains('Add Subscription').click();
       cy.get('input[required]').first().type('Dashboard Test');
-      cy.get('input[type="number"]').type('1000'); // $10.00
+      cy.get('input[type="number"]').type('10.00'); // 10.00 Euro
       cy.get('select').select('monthly');
       cy.get('input[type="date"]').type('2026-01-01');
       cy.contains('button', 'Create').click();

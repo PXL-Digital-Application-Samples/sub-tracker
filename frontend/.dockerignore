@@ -19,4 +19,4 @@ eslint.config.ts
 .oxlintrc.json
 .editorconfig
 .gitattributes
-nginx.conf
+

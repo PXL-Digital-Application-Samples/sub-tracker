@@ -14,7 +14,7 @@ describe('Subscriptions', () => {
   it('adds a new subscription', () => {
     cy.contains('Add Subscription').click();
     cy.get('input[required]').first().type('Cypress Test Service');
-    cy.get('input[type="number"]').type('999');
+    cy.get('input[type="number"]').type('9.99');
     cy.get('select').select('monthly');
     cy.get('input[type="date"]').type('2026-01-01');
     cy.contains('button', 'Create').click();
@@ -30,11 +30,11 @@ describe('Subscriptions', () => {
     });
 
     cy.get('input[required]').first().clear().type('Netflix Updated');
-    cy.get('input[type="number"]').clear().type('1599');
+    cy.get('input[type="number"]').clear().type('15.99');
     cy.contains('button', 'Save').click();
 
     cy.contains('Netflix Updated');
-    cy.contains('$15.99');
+    cy.contains('€15.99');
   });
 
   it('cancels a subscription', () => {
