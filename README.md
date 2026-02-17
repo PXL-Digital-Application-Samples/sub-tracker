@@ -12,6 +12,38 @@ A robust web application to help you track your subscriptions, supporting both S
 - **Responsive & Accessible Design:** Automatic Dark Mode, mobile-first UI, and **ARIA-compliant accessible modals**.
 - **Euro-first Localization:** Currency defaults to **€ (EUR)** with localized formatting.
 
+## Database Selection
+
+The application supports both **SQLite** and **PostgreSQL**. The engine is selected via the `DB_TYPE` environment variable.
+
+### Using Docker (Recommended)
+The project provides two separate Docker Compose files for easy switching:
+
+- **SQLite (Default):**
+  ```bash
+  docker compose up --build
+  ```
+- **PostgreSQL:**
+  ```bash
+  docker compose -f compose.postgres.yaml up --build
+  ```
+
+### Manual Configuration (Environment Variables)
+If running outside of Docker, set the following variables in your `.env` file:
+
+- **For SQLite:**
+  ```env
+  DB_TYPE=sqlite
+  ```
+- **For PostgreSQL:**
+  ```env
+  DB_TYPE=postgres
+  POSTGRES_HOST=localhost
+  POSTGRES_USER=sub_user
+  POSTGRES_PASSWORD=your_password
+  POSTGRES_DB=sub_tracker
+  ```
+
 ## Getting Started
 
 ### Prerequisites
