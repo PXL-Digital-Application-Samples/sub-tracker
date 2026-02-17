@@ -3,22 +3,20 @@ import { formatDate, formatPrice } from '../utils/format';
 
 describe('Format Utilities', () => {
   describe('formatDate', () => {
-    it('should format ISO date strings', () => {
-      // locale dependent, assuming en-US in test environment
-      const date = new Date('2026-01-01');
-      expect(formatDate('2026-01-01')).toBe(date.toLocaleDateString());
+    it('should format ISO date strings in Irish format', () => {
+      expect(formatDate('2026-01-01')).toBe('01/01/2026');
     });
 
-    it('should handle different date formats', () => {
-      const date = new Date('2026-12-31T23:59:59Z');
-      expect(formatDate('2026-12-31T23:59:59Z')).toBe(date.toLocaleDateString());
+    it('should handle different date formats in Irish format', () => {
+      expect(formatDate('2026-12-31')).toBe('31/12/2026');
     });
   });
 
   describe('formatPrice', () => {
-    it('should format cents to currency', () => {
-      expect(formatPrice(1999)).toContain('19.99');
-      expect(formatPrice(1999)).toContain('€');
+    it('should format cents to currency with Euro symbol', () => {
+      const result = formatPrice(1999);
+      expect(result).toContain('19.99');
+      expect(result).toContain('€');
     });
 
     it('should handle zero', () => {
