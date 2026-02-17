@@ -2,6 +2,8 @@
 
 A web application for tracking your subscriptions and monitoring spending. Built with a Vue 3 frontend, Express backend, and support for SQLite or PostgreSQL.
 
+![screenshot](screenshot.png)
+
 ## Getting Started
 
 ### Prerequisites
