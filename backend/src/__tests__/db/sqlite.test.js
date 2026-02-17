@@ -63,7 +63,7 @@ describe('SQLite Adapter', () => {
 
     const summaries = await db.getSubscriptionSummaries(userId);
     expect(summaries.total_active).toBe(2);
-    expect(summaries.total_monthly_cost).toBe(1000);
+    expect(summaries.total_monthly_cost).toBe(2000);
     expect(summaries.total_yearly_cost).toBe(24000); // (1000 * 12) + 12000
   });
 });

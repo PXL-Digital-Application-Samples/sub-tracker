@@ -128,7 +128,11 @@ async function countHistorySubscriptions(userId) {
 async function getSubscriptionSummaries(userId) {
   const sql = `
     SELECT 
-      COALESCE(SUM(CASE WHEN subscription_type = 'monthly' THEN price ELSE 0 END), 0) as total_monthly_cost,
+      COALESCE(SUM(CASE 
+        WHEN subscription_type = 'monthly' THEN price 
+        WHEN subscription_type = 'yearly' THEN ROUND(price / 12.0)
+        ELSE 0 
+      END), 0) as total_monthly_cost,
       COALESCE(SUM(CASE 
         WHEN subscription_type = 'monthly' THEN price * 12 
         WHEN subscription_type = 'yearly' THEN price 
