@@ -1,53 +1,39 @@
-const path = require('path');
-const fs = require('fs');
+const db = require('../../db');
 
-describe('SQLite Adapter', () => {
-  // Skip if we are not testing sqlite
-  if (process.env.DB_TYPE && process.env.DB_TYPE !== 'sqlite') {
-    it.skip('Skipping SQLite tests for non-sqlite DB_TYPE', () => {});
+describe('PostgreSQL Adapter', () => {
+  // Skip if we are not testing postgres
+  if (process.env.DB_TYPE !== 'postgres') {
+    it.skip('Skipping PostgreSQL tests for non-postgres DB_TYPE', () => {});
     return;
   }
-
-  // Set a unique DB path BEFORE requiring the module
-  const dbPath = path.resolve(__dirname, `../../../data/test_adapter_${Date.now()}.db`);
-  process.env.DB_PATH = dbPath;
-
-  // ONLY require if we ARE in sqlite mode
-  const db = require('../../db/sqlite');
 
   let userId;
   let testEmail;
 
   beforeAll(async () => {
+    // Tables should already exist from seed/global setup in vitest.postgres.js
+    // but we can ensure they are there.
     await db.createUsersTable();
     await db.createSubscriptionsTable();
     
     // Create a test user
-    testEmail = `adapter_${Date.now()}@test.com`;
+    testEmail = `adapter_pg_${Date.now()}@test.com`;
     const user = await db.insertUser({
       email: testEmail,
       password: 'password',
       first_name: 'Adapter',
-      last_name: 'Test',
+      last_name: 'Postgres',
       zipcode: '0000'
     });
     userId = user.id;
   });
 
   afterAll(async () => {
-    await db.close();
-    if (fs.existsSync(dbPath)) {
-      fs.unlinkSync(dbPath);
-    }
+    // We don't close the pool here because other tests might need it 
+    // and vitest.postgres.js handles cleanup.
   });
 
-  it('should insert and find a user', async () => {
-    const user = await db.findUserByEmail(testEmail);
-    expect(user).toBeDefined();
-    expect(user.first_name).toBe('Adapter');
-  });
-
-  it('should get subscription summaries', async () => {
+  it('should get subscription summaries with correct yearly total', async () => {
     await db.insertSubscription(userId, {
       company_name: 'Monthly Sub',
       price: 1000,

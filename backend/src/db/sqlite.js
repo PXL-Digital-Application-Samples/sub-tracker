@@ -129,7 +129,11 @@ async function getSubscriptionSummaries(userId) {
   const sql = `
     SELECT 
       COALESCE(SUM(CASE WHEN subscription_type = 'monthly' THEN price ELSE 0 END), 0) as total_monthly_cost,
-      COALESCE(SUM(CASE WHEN subscription_type = 'yearly' THEN price ELSE 0 END), 0) as total_yearly_cost,
+      COALESCE(SUM(CASE 
+        WHEN subscription_type = 'monthly' THEN price * 12 
+        WHEN subscription_type = 'yearly' THEN price 
+        ELSE 0 
+      END), 0) as total_yearly_cost,
       COUNT(*) as total_active
     FROM subscriptions 
     WHERE user_id = ? AND cancelled_at IS NULL
