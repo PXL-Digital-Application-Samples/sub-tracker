@@ -4,6 +4,32 @@ A web application for tracking your subscriptions and monitoring spending. Built
 
 ![screenshot](screenshot.png)
 
+---
+
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Set Up Environment Variables](#set-up-environment-variables)
+  - [Start the Application](#start-the-application)
+  - [Log In](#log-in)
+- [Features](#features)
+- [Choosing a Database](#choosing-a-database)
+  - [Running without Docker](#running-without-docker)
+- [Development \& Testing](#development--testing)
+  - [Run All Tests](#run-all-tests)
+  - [Individual Commands](#individual-commands)
+- [Project Structure](#project-structure)
+- [Deploying with Pre-built Images](#deploying-with-pre-built-images)
+  - [Quick setup](#quick-setup)
+  - [Backend environment variables](#backend-environment-variables)
+  - [Networking note](#networking-note)
+  - [Deploying to the cloud](#deploying-to-the-cloud)
+    - [Set up a managed PostgreSQL database](#set-up-a-managed-postgresql-database)
+    - [Deploy the backend](#deploy-the-backend)
+    - [Deploy the frontend](#deploy-the-frontend)
+    - [Alternative: host the frontend on a CDN](#alternative-host-the-frontend-on-a-cdn)
+- [License](#license)
+
+
 ## Getting Started
 
 ### Prerequisites
@@ -11,7 +37,7 @@ A web application for tracking your subscriptions and monitoring spending. Built
 - [Docker](https://www.docker.com/) and [Docker Compose](https://docs.docker.com/compose/)
 - [Node.js 22+](https://nodejs.org/) (only needed for local development without Docker)
 
-### 1. Set Up Environment Variables
+### Set Up Environment Variables
 
 ```bash
 cp .env.example .env
@@ -21,7 +47,7 @@ Open `.env` and set at minimum:
 - `SESSION_SECRET` - any random string used to sign sessions
 - `POSTGRES_PASSWORD` - only needed if using PostgreSQL
 
-### 2. Start the Application
+### Start the Application
 
 **With SQLite (default, simplest):**
 
@@ -37,7 +63,7 @@ docker compose -f compose.postgres.yaml up --build
 
 The app will be available at **http://localhost:8080**.
 
-### 3. Log In
+### Log In
 
 A default user is created on first startup:
 
@@ -230,7 +256,7 @@ The frontend container's nginx config proxies all `/api` requests to `http://bac
 
 Cloud platforms run each container as a separate service. The main steps are: provision a database, deploy the backend, deploy the frontend with a custom nginx config pointing at the backend.
 
-#### 1. Set up a managed PostgreSQL database
+#### Set up a managed PostgreSQL database
 
 SQLite stores data on disk, which is lost when cloud containers restart. Use a managed database instead:
 
@@ -239,7 +265,7 @@ SQLite stores data on disk, which is lost when cloud containers restart. Use a m
 
 Note the hostname, username, password, and database name — you'll need them in the next step.
 
-#### 2. Deploy the backend
+#### Deploy the backend
 
 | Platform | Service | How to deploy |
 | -------- | ------- | ------------- |
@@ -261,7 +287,7 @@ NODE_ENV=production
 
 Note the URL your platform assigns to the backend (e.g. `https://backend-abc123.azurecontainerapps.io`).
 
-#### 3. Deploy the frontend
+#### Deploy the frontend
 
 The frontend image serves static files via nginx. By default, its nginx config proxies `/api` to `http://backend:3000`, which only works in Docker Compose. For cloud deployments, replace the nginx config to point at your backend's public URL.
 
