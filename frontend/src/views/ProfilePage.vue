@@ -58,7 +58,8 @@ const handleUpdate = async () => {
   error.value = '';
   successMessage.value = '';
   try {
-    await api.updateUser(user.value);
+    const { id: _id, ...updateData } = user.value;
+    await api.updateUser(updateData);
     successMessage.value = 'Profile updated successfully!';
   } catch (err: any) {
     error.value = err.message;

@@ -19,7 +19,7 @@
           <tbody>
           <tr v-for="sub in subscriptions" :key="sub.id">
             <td>{{ sub.company_name }}</td>
-            <td>${{ formatPrice(sub.price) }}</td>
+            <td>{{ formatPrice(sub.price) }}</td>
             <td>{{ sub.subscription_type }}</td>
             <td>{{ formatDate(sub.start_date) }}</td>
             <td>
@@ -30,24 +30,24 @@
               </div>
             </td>
           </tr>
-                  </tbody>
-                        </table>
-                      </div>
-                      <p v-else>No active subscriptions.</p>
-                
-                      <div class="pagination" v-if="totalPages > 1">
-                        <button :disabled="currentPage === 1" @click="fetchSubscriptions(currentPage - 1)">Previous</button>
-                        <span>Page {{ currentPage }} of {{ totalPages }}</span>
-                        <button :disabled="currentPage === totalPages" @click="fetchSubscriptions(currentPage + 1)">Next</button>
-                      </div>
-                    </template>
-                    <SubscriptionModal
-      v-if="isModalOpen"
-      :subscription="selectedSubscription"
-      @close="closeModal"
-      @saved="fetchSubscriptions"
-    />
-  </div>
+        </tbody>
+      </table>
+    </div>
+    <p v-else>No active subscriptions.</p>
+
+    <div class="pagination" v-if="totalPages > 1">
+      <button :disabled="currentPage === 1" @click="fetchSubscriptions(currentPage - 1)">Previous</button>
+      <span>Page {{ currentPage }} of {{ totalPages }}</span>
+      <button :disabled="currentPage === totalPages" @click="fetchSubscriptions(currentPage + 1)">Next</button>
+    </div>
+  </template>
+  <SubscriptionModal
+    v-if="isModalOpen"
+    :subscription="selectedSubscription"
+    @close="closeModal"
+    @saved="fetchSubscriptions"
+  />
+</div>
 </template>
 
 <script setup lang="ts">

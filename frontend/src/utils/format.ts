@@ -6,10 +6,10 @@ export function formatDate(dateString: string): string {
   return date.toLocaleDateString();
 }
 
-export function formatPrice(cents: number): string {
-  const dollars = cents / 100;
-  return dollars.toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+export function formatPrice(cents: number, currency: string = 'EUR'): string {
+  const amount = cents / 100;
+  return amount.toLocaleString(undefined, {
+    style: 'currency',
+    currency: currency,
   });
 }

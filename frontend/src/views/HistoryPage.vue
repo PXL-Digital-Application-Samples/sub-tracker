@@ -19,7 +19,7 @@
           <tbody>
             <tr v-for="sub in subscriptions" :key="sub.id">
               <td>{{ sub.company_name }}</td>
-              <td>${{ formatPrice(sub.price) }}</td>
+              <td>{{ formatPrice(sub.price) }}</td>
               <td>{{ sub.subscription_type }}</td>
               <td>{{ formatDate(sub.start_date) }}</td>
               <td>{{ formatDate(sub.cancelled_at!) }}</td>
@@ -31,6 +31,12 @@
         </table>
       </div>
       <p v-else>No historical subscriptions.</p>
+                
+      <div class="pagination" v-if="totalPages > 1">
+        <button :disabled="currentPage === 1" @click="fetchHistory(currentPage - 1)">Previous</button>
+        <span>Page {{ currentPage }} of {{ totalPages }}</span>
+        <button :disabled="currentPage === totalPages" @click="fetchHistory(currentPage + 1)">Next</button>
+      </div>
     </template>
   </div>
 </template>
@@ -44,12 +50,16 @@ import { formatDate, formatPrice } from '../utils/format';
 const subscriptions = ref<Subscription[]>([]);
 const loading = ref(true);
 const error = ref('');
+const currentPage = ref(1);
+const totalPages = ref(1);
 
-const fetchHistory = async () => {
+const fetchHistory = async (page = 1) => {
   try {
     loading.value = true;
-    const response = await api.getSubscriptionHistory();
+    const response = await api.getSubscriptionHistory(page);
     subscriptions.value = response.subscriptions;
+    totalPages.value = response.totalPages;
+    currentPage.value = response.page;
   } catch (err: any) {
     error.value = err.message;
   } finally {

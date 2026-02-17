@@ -20,7 +20,11 @@ async function query(sql, params = []) {
 }
 
 async function run(sql, params = []) {
-  return getDbInstance().prepare(sql).run(params);
+  const result = getDbInstance().prepare(sql).run(params);
+  return {
+    changes: result.changes,
+    lastInsertRowid: result.lastInsertRowid,
+  };
 }
 
 async function close() {
@@ -124,8 +128,8 @@ async function countHistorySubscriptions(userId) {
 async function getSubscriptionSummaries(userId) {
   const sql = `
     SELECT 
-      SUM(CASE WHEN subscription_type = 'monthly' THEN price ELSE 0 END) as total_monthly_cost,
-      SUM(CASE WHEN subscription_type = 'yearly' THEN price ELSE 0 END) as total_yearly_cost,
+      COALESCE(SUM(CASE WHEN subscription_type = 'monthly' THEN price ELSE 0 END), 0) as total_monthly_cost,
+      COALESCE(SUM(CASE WHEN subscription_type = 'yearly' THEN price ELSE 0 END), 0) as total_yearly_cost,
       COUNT(*) as total_active
     FROM subscriptions 
     WHERE user_id = ? AND cancelled_at IS NULL

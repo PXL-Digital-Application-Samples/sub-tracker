@@ -11,7 +11,8 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install
+ARG NODE_ENV=production
+RUN if [ "$NODE_ENV" = "production" ]; then npm ci --omit=dev; else npm ci; fi
 
 # Copy the rest of the application's source code
 COPY . .

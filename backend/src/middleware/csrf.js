@@ -1,6 +1,5 @@
 const { doubleCsrf } = require('csrf-csrf');
-
-const sessionSecret = process.env.SESSION_SECRET || 'test-secret';
+const { sessionSecret } = require('../config');
 
 const {
   doubleCsrfProtection,

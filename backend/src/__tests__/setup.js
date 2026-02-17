@@ -3,11 +3,13 @@ const supertest = require('supertest');
 const db = require('../db');
 const bcrypt = require('bcrypt');
 const path = require('path');
+const fs = require('fs');
 
 let serverStarted = false;
 
 // Use a separate test database for each run to avoid state leakage
-process.env.DB_PATH = path.resolve(__dirname, `../../data/test_${Date.now()}.db`);
+const testDbPath = path.resolve(__dirname, `../../data/test_${Date.now()}.db`);
+process.env.DB_PATH = testDbPath;
 
 async function ensureServer() {
   if (!serverStarted) {
@@ -15,6 +17,19 @@ async function ensureServer() {
     serverStarted = true;
   }
 }
+
+afterAll(async () => {
+  if (db && db.close) {
+    await db.close();
+  }
+  if (fs.existsSync(testDbPath)) {
+    try {
+      fs.unlinkSync(testDbPath);
+    } catch (_err) {
+      // Ignore errors if file is already gone or locked
+    }
+  }
+});
 
 async function createTestAgent() {
   await ensureServer();

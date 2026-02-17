@@ -1,9 +1,9 @@
 <template>
-  <div class="modal-backdrop" @click.self="$emit('close')">
-    <div class="modal">
+  <div class="modal-backdrop" @click.self="$emit('close')" @keydown.esc="$emit('close')">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <header class="modal-header">
-        <h2>{{ isEditMode ? 'Edit' : 'Add' }} Subscription</h2>
-        <button @click="$emit('close')">X</button>
+        <h2 id="modal-title">{{ isEditMode ? 'Edit' : 'Add' }} Subscription</h2>
+        <button @click="$emit('close')" aria-label="Close modal">X</button>
       </header>
       <section class="modal-body">
         <form @submit.prevent="handleSubmit">
@@ -40,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, onMounted, onUnmounted } from 'vue';
 import api from '../services/api';
 import type { Subscription, SubscriptionCreate } from '../types';
 
@@ -56,6 +56,20 @@ const emit = defineEmits<{
 const form = ref<Partial<Subscription>>({});
 const error = ref('');
 const isEditMode = ref(false);
+
+const handleEscape = (e: KeyboardEvent) => {
+  if (e.key === 'Escape') {
+    emit('close');
+  }
+};
+
+onMounted(() => {
+  window.addEventListener('keydown', handleEscape);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleEscape);
+});
 
 watch(() => props.subscription, (newVal) => {
   if (newVal) {

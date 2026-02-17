@@ -23,7 +23,7 @@ describe('HistoryPage', () => {
 
     await vi.waitFor(() => expect(wrapper.text()).not.toContain('Loading...'));
     expect(wrapper.text()).toContain('Old Sub');
-    expect(wrapper.text()).toContain('$10.00');
+    expect(wrapper.text()).toContain('€10.00');
   });
 
   it('shows empty state when no history', async () => {

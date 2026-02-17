@@ -89,7 +89,7 @@ router.put('/subscriptions/:id', subscriptionValidation, validate, async (req, r
       start_date
     });
 
-    if ((result.changes ?? result.rowCount) === 0) {
+    if (result.changes === 0) {
       return res.status(404).json({ message: 'Subscription not found or you do not have permission to update it.' });
     }
     res.json({ message: 'Subscription updated successfully.' });
@@ -103,7 +103,7 @@ router.post('/subscriptions/:id/cancel', async (req, res) => {
   const { id } = req.params;
   try {
     const result = await db.cancelSubscription(id, req.session.userId);
-    if ((result.changes ?? result.rowCount) === 0) {
+    if (result.changes === 0) {
       return res.status(404).json({ message: 'Subscription not found or you do not have permission to cancel it.' });
     }
     res.json({ message: 'Subscription cancelled successfully.' });
@@ -118,7 +118,7 @@ router.delete('/subscriptions/:id', async (req, res) => {
   try {
     const result = await db.deleteSubscription(id, req.session.userId);
     
-    if ((result.changes ?? result.rowCount) === 0) {
+    if (result.changes === 0) {
       return res.status(404).json({ message: 'Subscription not found or you do not have permission to delete it.' });
     }
     logger.info({ event: 'subscription_deleted', userId: req.session.userId, subscriptionId: id }, 'Subscription deleted');

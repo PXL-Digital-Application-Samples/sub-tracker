@@ -4,12 +4,13 @@ A robust web application to help you track your subscriptions, supporting both S
 
 ## Features
 
-- **User Authentication:** Secure session-based authentication with POST-login CSRF token regeneration.
-- **Subscription Management:** Full CRUD operations with soft-cancellation and history tracking.
+- **User Authentication:** Secure session-based authentication with **session fixation protection** and POST-login CSRF token regeneration.
+- **Subscription Management:** Full CRUD operations with soft-cancellation, history tracking, and **paginated views**.
 - **Dashboard:** Real-time analytics for monthly and yearly spending.
-- **Multi-DB Support:** Seamlessly switch between SQLite and PostgreSQL.
+- **Multi-DB Support:** Seamlessly switch between SQLite and PostgreSQL with normalized adapter interfaces.
 - **Automated Quality Pipeline:** Mandatory linting and dedicated test setups for each database engine.
-- **Responsive Design:** Automatic Dark Mode and mobile-first UI.
+- **Responsive & Accessible Design:** Automatic Dark Mode, mobile-first UI, and **ARIA-compliant accessible modals**.
+- **Euro-first Localization:** Currency defaults to **€ (EUR)** with localized formatting.
 
 ## Getting Started
 
@@ -55,7 +56,7 @@ npm test
 
 ### Manual Commands
 - **Root Lint:** `npm run lint`
-- **Backend SQLite Tests:** `npm run test:backend:sqlite` (Isolated via temporary databases)
+- **Backend SQLite Tests:** `npm run test:backend:sqlite` (Isolated via temporary databases with automatic cleanup)
 - **Backend Postgres Tests:** `npm run test:backend:postgres`
 - **Frontend Unit:** `npm run test:frontend` (Non-interactive)
 - **E2E Tests:** `npm run test:e2e` (Manual Cypress suite)
@@ -83,10 +84,15 @@ Each successful run of the **CI Pipeline** publishes Docker images to the **GitH
 ## Architecture
 
 - **Orchestration:** Platform-independent Node.js scripts for complex testing lifecycles.
-- **Database:** Adapter pattern (`sqlite.js` / `postgres.js`) with hardened lazy initialization for perfect environmental isolation.
-- **Security:** CSRF protection with token-per-session binding, secure cookie handling, and input validation.
+- **Database:** Adapter pattern (`sqlite.js` / `postgres.js`) with normalized return shapes and hardened lazy initialization for perfect environmental isolation.
+- **Security:** 
+    - CSRF protection with token-per-session binding.
+    - Session ID regeneration on authentication.
+    - Centralized configuration with mandatory production secrets.
+    - Strict input length limits and type validation.
 - **State Management:** Reactive Pinia stores for Auth and Global state.
-- **CI/CD Readiness:** Standardized ESLint configs and Vitest setups ensure local/CI parity.
+- **Health Monitoring:** DB-aware health checks for robust Docker orchestration.
+- **CI/CD Readiness:** Standardized ESLint configs and Vitest setups ensure local/CI parity. Optimized Docker builds with strict `.dockerignore` patterns.
 
 ## License
 

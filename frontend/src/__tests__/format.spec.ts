@@ -16,20 +16,21 @@ describe('Format Utilities', () => {
   });
 
   describe('formatPrice', () => {
-    it('should format cents to dollars', () => {
-      expect(formatPrice(1999)).toBe('19.99');
+    it('should format cents to currency', () => {
+      expect(formatPrice(1999)).toContain('19.99');
+      expect(formatPrice(1999)).toContain('€');
     });
 
     it('should handle zero', () => {
-      expect(formatPrice(0)).toBe('0.00');
+      expect(formatPrice(0)).toContain('0.00');
     });
 
     it('should handle single digits', () => {
-      expect(formatPrice(5)).toBe('0.05');
+      expect(formatPrice(5)).toContain('0.05');
     });
 
     it('should handle large amounts', () => {
-      expect(formatPrice(123456)).toBe('1,234.56');
+      expect(formatPrice(123456)).toContain('1,234.56');
     });
   });
 });

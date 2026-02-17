@@ -28,12 +28,18 @@ router.post('/login', loginLimiter, async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials.' });
     }
 
-    req.session.userId = user.id;
-    logger.info({ event: 'login_success' }, 'User logged in successfully');
-    
-    // Generate a new CSRF token after login to bind it to the new session
-    const token = generateCsrfToken(req, res);
-    res.json({ message: 'Login successful.', token });
+    req.session.regenerate((err) => {
+      if (err) {
+        logger.error({ err }, 'Session regeneration error');
+        return res.status(500).json({ message: 'Internal server error.' });
+      }
+      req.session.userId = user.id;
+      logger.info({ event: 'login_success' }, 'User logged in successfully');
+
+      // Generate a new CSRF token after login to bind it to the new session
+      const token = generateCsrfToken(req, res);
+      res.json({ message: 'Login successful.', token });
+    });
   } catch (error) {
     logger.error({ err: error }, 'Login error');
     res.status(500).json({ message: 'Internal server error.' });

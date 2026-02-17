@@ -11,11 +11,11 @@
         </div>
         <div class="card summary-card">
           <h3>Monthly Cost</h3>
-          <p class="summary-value">${{ formatPrice(data.total_monthly_cost) }}</p>
+          <p class="summary-value">{{ formatPrice(data.total_monthly_cost) }}</p>
         </div>
         <div class="card summary-card">
           <h3>Yearly Cost</h3>
-          <p class="summary-value">${{ formatPrice(data.total_yearly_cost) }}</p>
+          <p class="summary-value">{{ formatPrice(data.total_yearly_cost) }}</p>
         </div>
       </div>
       
@@ -24,7 +24,7 @@
         <ul v-if="data.subscriptions.length > 0" class="sub-list">
           <li v-for="sub in data.subscriptions" :key="sub.id" class="sub-item">
             <span class="company">{{ sub.company_name }}</span>
-            <span class="price">${{ formatPrice(sub.price) }} / {{ sub.subscription_type }}</span>
+            <span class="price">{{ formatPrice(sub.price) }} / {{ sub.subscription_type }}</span>
             <span class="date">Started: {{ formatDate(sub.start_date) }}</span>
           </li>
         </ul>

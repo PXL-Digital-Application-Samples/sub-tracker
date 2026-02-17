@@ -14,10 +14,10 @@ const userRouter = require('./routes/user');
 const subscriptionsRouter = require('./routes/subscriptions');
 const logger = require('./logger');
 const { doubleCsrfProtection, generateCsrfToken } = require('./middleware/csrf');
+const { sessionSecret } = require('./config');
 
 const app = express();
 const port = process.env.PORT || 3000;
-const sessionSecret = process.env.SESSION_SECRET || 'test-secret';
 
 const allowedOrigins = process.env.CORS_ORIGINS
   ? process.env.CORS_ORIGINS.split(',')
@@ -31,8 +31,16 @@ app.use(express.json());
 app.use(cookieParser(sessionSecret));
 
 // Health check before routers and session
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok' });
+app.get('/api/health', async (req, res) => {
+  try {
+    // Verify database connectivity
+    const sql = process.env.DB_TYPE === 'postgres' ? 'SELECT 1' : 'SELECT 1'; // same for both
+    await db.query(sql);
+    res.json({ status: 'ok', database: 'connected' });
+  } catch (error) {
+    logger.error({ err: error }, 'Health check failed');
+    res.status(503).json({ status: 'error', message: 'Database disconnected' });
+  }
 });
 
 const sessionStore = process.env.DB_TYPE === 'postgres'

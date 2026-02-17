@@ -35,7 +35,7 @@ describe('SubscriptionsPage', () => {
 
     await vi.waitFor(() => expect(wrapper.text()).not.toContain('Loading...'));
     expect(wrapper.text()).toContain('Netflix');
-    expect(wrapper.text()).toContain('$15.00');
+    expect(wrapper.text()).toContain('€15.00');
   });
 
   it('shows empty state when no subscriptions', async () => {

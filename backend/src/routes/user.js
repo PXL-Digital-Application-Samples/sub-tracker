@@ -1,9 +1,8 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
-const { body } = require('express-validator');
 const db = require('../db');
 const { requireAuth } = require('../middleware/auth');
-const { validate, emailValidation, passwordValidation } = require('../middleware/validate');
+const { validate, passwordValidation, userUpdateValidation } = require('../middleware/validate');
 const logger = require('../logger');
 
 const router = express.Router();
@@ -21,13 +20,6 @@ router.get('/user', requireAuth, async (req, res) => {
     res.status(500).json({ message: 'Internal server error.' });
   }
 });
-
-const userUpdateValidation = [
-  ...emailValidation,
-  body('first_name').notEmpty().withMessage('First name is required.'),
-  body('last_name').notEmpty().withMessage('Last name is required.'),
-  body('zipcode').notEmpty().withMessage('Zipcode is required.'),
-];
 
 router.put('/user', requireAuth, userUpdateValidation, validate, async (req, res) => {
   const { email, first_name, last_name, zipcode } = req.body;

@@ -4,7 +4,7 @@ const path = require('path');
 console.log('🏗️  Building backend with --no-cache for Postgres tests...');
 
 // 1. Force rebuild to ensure code parity
-const build = spawnSync('docker', ['compose', '-f', 'compose.postgres.yaml', 'build', '--no-cache', 'backend'], { stdio: 'inherit' });
+const build = spawnSync('docker', ['compose', '-f', 'compose.postgres.yaml', 'build', '--no-cache', '--build-arg', 'NODE_ENV=test', 'backend'], { stdio: 'inherit' });
 if (build.status !== 0) process.exit(1);
 
 console.log('🐘 Starting PostgreSQL...');
@@ -31,7 +31,7 @@ for (let i = 0; i < 30; i++) {
     ready = true;
     break;
   }
-  spawnSync('node', ['-e', 'setTimeout(()=>{}, 1000)']); // Sleep 1s
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1000); // Sleep 1s
 }
 
 if (!ready) {

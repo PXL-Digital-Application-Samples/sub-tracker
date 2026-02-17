@@ -36,7 +36,7 @@ describe('DashboardPage', () => {
     expect(wrapper.text()).toContain('Total Active');
     expect(wrapper.text()).toContain('2');
     expect(wrapper.text()).toContain('Monthly Cost');
-    expect(wrapper.text()).toContain('$25.00');
+    expect(wrapper.text()).toContain('€25.00');
     expect(wrapper.text()).toContain('Netflix');
     expect(wrapper.text()).toContain('Spotify');
   });

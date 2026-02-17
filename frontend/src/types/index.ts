@@ -48,4 +48,4 @@ export interface PasswordUpdate {
 }
 
 export type UserUpdate = Omit<User, 'id'>;
-export type SubscriptionCreate = Omit<Subscription, 'id' | 'user_id' | 'created_at'>;
+export type SubscriptionCreate = Omit<Subscription, 'id' | 'user_id' | 'created_at' | 'cancelled_at'>;

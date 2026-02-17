@@ -26,7 +26,10 @@ async function run(sql, params = []) {
   const client = await pool.connect();
   try {
     const result = await client.query(sql, params);
-    return result;
+    return {
+      changes: result.rowCount,
+      rows: result.rows,
+    };
   } finally {
     client.release();
   }
