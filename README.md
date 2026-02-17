@@ -13,6 +13,7 @@ A web application for tracking your subscriptions and monitoring spending. Built
   - [Log In](#log-in)
 - [Features](#features)
 - [Choosing a Database](#choosing-a-database)
+  - [Customizing the SQLite file location](#customizing-the-sqlite-file-location)
   - [Running without Docker](#running-without-docker)
 - [Development \& Testing](#development--testing)
   - [Run All Tests](#run-all-tests)
