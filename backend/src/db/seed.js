@@ -2,22 +2,35 @@ const bcrypt = require('bcrypt');
 const db = require('./index');
 const logger = require('../logger');
 
-const seedData = async () => {
-  try {
-    const existingUser = await db.findUserByEmail('user@test.com');
-    if (!existingUser) {
-      const hashedPassword = await bcrypt.hash('password123', 10);
-      await db.insertUser({
-        email: 'user@test.com',
-        password: hashedPassword,
-        first_name: 'Test',
-        last_name: 'User',
-        zipcode: '1000'
-      });
-      logger.info('Default user created');
-    }
+const ensureDefaultUser = async () => {
+  const defaultEmail = process.env.INITIAL_USER_EMAIL || 'user@test.com';
+  const defaultPassword = process.env.INITIAL_USER_PASSWORD || 'password123';
 
-    const user = await db.findUserByEmail('user@test.com');
+  try {
+    const existingUser = await db.findUserByEmail(defaultEmail);
+    if (!existingUser) {
+      const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+      await db.insertUser({
+        email: defaultEmail,
+        password: hashedPassword,
+        first_name: 'Default',
+        last_name: 'User',
+        zipcode: '0000'
+      });
+      logger.info({ email: defaultEmail }, 'Default user created');
+    }
+  } catch (error) {
+    logger.error({ err: error }, 'Error ensuring default user');
+    throw error;
+  }
+};
+
+const seedData = async () => {
+  const defaultEmail = process.env.INITIAL_USER_EMAIL || 'user@test.com';
+  try {
+    await ensureDefaultUser();
+
+    const user = await db.findUserByEmail(defaultEmail);
     const userId = user.id;
 
     // Use a generic query for checking existence, or better, use a named method if we had one.
@@ -50,4 +63,4 @@ const seedData = async () => {
   }
 };
 
-module.exports = { seedData };
+module.exports = { seedData, ensureDefaultUser };

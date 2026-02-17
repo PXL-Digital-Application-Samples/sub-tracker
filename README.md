@@ -40,8 +40,10 @@ A robust web application to help you track your subscriptions, supporting both S
 
 ### Default Credentials
 
-- **Email:** `user@test.com`
-- **Password:** `password123`
+- **Email:** `user@test.com` (Configurable via `INITIAL_USER_EMAIL`)
+- **Password:** `password123` (Configurable via `INITIAL_USER_PASSWORD`)
+
+*Note: In production, it is highly recommended to set these via environment variables or change the password immediately after first login.*
 
 ## Development & Testing
 

@@ -8,7 +8,7 @@ const SqliteStore = require('better-sqlite3-session-store')(session);
 
 const db = require('./db');
 const { createTables } = require('./db/schema');
-const { seedData } = require('./db/seed');
+const { seedData, ensureDefaultUser } = require('./db/seed');
 const authRouter = require('./routes/auth');
 const userRouter = require('./routes/user');
 const subscriptionsRouter = require('./routes/subscriptions');
@@ -85,6 +85,8 @@ async function startServer() {
     await createTables();
     if (process.env.NODE_ENV !== 'production') {
       await seedData();
+    } else {
+      await ensureDefaultUser();
     }
 
     server = app.listen(port, () => {
