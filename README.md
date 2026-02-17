@@ -47,18 +47,38 @@ A robust web application to help you track your subscriptions, supporting both S
 This project uses **NPM Workspaces** for task orchestration.
 
 ### Full Automated Suite
-Run the comprehensive test suite (Linting + SQLite Tests + Postgres Tests + Frontend Unit + E2E) with one command from the root:
+Run the primary test suite (Linting + SQLite Tests + Postgres Tests + Frontend Unit) with one command from the root:
 ```bash
 npm test
 ```
-*This handles Docker lifecycles and service orchestration automatically.*
+*This handles Docker lifecycles and service orchestration automatically. E2E tests are excluded from this suite for speed and should be run manually.*
 
 ### Manual Commands
 - **Root Lint:** `npm run lint`
-- **Backend SQLite Tests:** `npm run test:backend:sqlite`
+- **Backend SQLite Tests:** `npm run test:backend:sqlite` (Isolated via temporary databases)
 - **Backend Postgres Tests:** `npm run test:backend:postgres`
-- **Frontend Unit:** `npm run test:frontend`
-- **E2E Tests:** `npm run test:e2e`
+- **Frontend Unit:** `npm run test:frontend` (Non-interactive)
+- **E2E Tests:** `npm run test:e2e` (Manual Cypress suite)
+
+## Continuous Integration & Packages
+
+Each successful run of the **CI Pipeline** publishes Docker images to the **GitHub Container Registry (GHCR)**. These images are tagged with `:latest` and the specific `:git-sha`.
+
+### How to use CI Packages:
+1. Authenticate with GHCR (if the repository is private):
+   ```bash
+   echo $GITHUB_TOKEN | docker login ghcr.io -u YOUR_USERNAME --password-stdin
+   ```
+2. Pull the latest images:
+   ```bash
+   docker pull ghcr.io/pxl-digital-application-samples/sub-tracker/backend:latest
+   docker pull ghcr.io/pxl-digital-application-samples/sub-tracker/frontend:latest
+   ```
+3. Run them using Docker Compose:
+   Update your `compose.yaml` to point to these images instead of building locally, or run them manually:
+   ```bash
+   docker run -p 3000:3000 ghcr.io/pxl-digital-application-samples/sub-tracker/backend:latest
+   ```
 
 ## Architecture
 

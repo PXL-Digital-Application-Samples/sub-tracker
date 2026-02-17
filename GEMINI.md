@@ -63,19 +63,28 @@ The project enforces high code quality through isolated, environment-aware testi
 
 ### Backend Tests
 - **Architectural Isolation:** `src/__tests__/db/factory.test.js` verifies DB switching logic.
-- **SQLite:** `npm run test:backend:sqlite` (Uses `vitest.sqlite.js`).
+- **SQLite:** `npm run test:backend:sqlite` (Uses `vitest.sqlite.js` with per-test file DB isolation and automatic cleanup).
 - **PostgreSQL:** `npm run test:backend:postgres` (Handles Docker lifecycle automatically).
 
 ### Frontend Tests
 - **Linting:** `npm run lint` (ESLint + oxlint + prettier).
-- **Unit/Component:** `npm run test:frontend`.
-- **E2E (Cypress):** `npm run test:e2e` (Handles full environment setup and cleanup).
+- **Unit/Component:** `npm run test:frontend` (Uses non-interactive CI mode `vitest run`).
+- **E2E (Cypress):** `npm run test:e2e` (Manual run; excluded from CI and root `npm test` gate).
+
+## Deployment & CI Packages
+
+The CI pipeline is configured to build and push Docker images to **GHCR** on every run.
+- **Workflow:** `quality-checks` -> `build-docker-images` -> `backend-test-postgres`.
+- **Packages:** Images are available at `ghcr.io/pxl-digital-application-samples/sub-tracker/backend` and `ghcr.io/pxl-digital-application-samples/sub-tracker/frontend`.
+- **Caching:** Uses `type=gha` cache backend for GitHub Actions, which is the most efficient way to share layers between workflow runs without manual cache management.
+- **Versioning:** Images are dual-tagged with `:latest` and the unique `GITHUB_SHA`.
 
 ## Development Conventions
 
 -   **Orchestration:** Avoid bash scripts; use Node.js scripts in `scripts/` for complex tasks.
 -   **Database abstraction:** All SQL is encapsulated within `backend/src/db/sqlite.js` and `backend/src/db/postgres.js`.
 -   **Hardened Lazy Loading:** `sqlite.js` throws an error if accessed while `DB_TYPE` is not `sqlite`.
+-   **Test Isolation:** SQLite adapter tests use unique temporary database files (`data/test_adapter_*.db`) to prevent state leakage.
 -   **CSRF Security:** Fresh tokens are generated and returned upon successful login to bind to the new session.
 -   **Stable Results:** All database queries in tests use `ORDER BY id ASC`.
 
